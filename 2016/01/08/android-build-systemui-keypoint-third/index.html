@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="0xfree">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="0xfree">
+    
+    <meta name="keywords" content="android,build-system,0xfree-blog">
+    
+    <meta name="description" content="Read The Fuck Code">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Android编译系统分析之几个关键点（三） · 0xfree&#39;s Blog</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/favicon.ico">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?7a3e0de2a2409ac715977a70cebe1750";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    
+    <!-- 谷歌统计  -->
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-131092737-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >0xfree&#39;s Blog.</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">Android编译系统分析之几个关键点（三）</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href=/>0xfree's Blog.</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+
+height:50vh;
+">
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(https://source.unsplash.com/1600x900/?code)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            Android编译系统分析之几个关键点（三）
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "build">build</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "makefile">makefile</a>
+    
+</div>
+                
+                
+                    <div class="post-intro-read">
+                        <span>字数统计: <span class="post-count word-count">5k</span>阅读时长: <span class="post-count reading-time">21 min</span></span>
+                    </div>
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2016/01/08</span>
+                    <!-- 
+                    <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                        <span class="iconfont-archer">&#xe602;</span>
+                        <span id="busuanzi_value_page_pv"></span>
+                    </span>
+                     -->
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <p><strong>Android 编译系统解析系列文档</strong></p>
+<p>编译系统入口envsetup.sh解析</p>
+<ul>
+<li><a href="http://www.0xfree.top/2015/11/05/android-build-system-envsetup/">source build/envsetup.sh 做了什么？</a></li>
+</ul>
+<p>解析lunch的执行过程以及make执行过程中include文件的顺序</p>
+<ul>
+<li><a href="http://www.0xfree.top/2015/12/01/android-build-system-lunch/">Android编译系统分析之lunch分析</a></li>
+<li><a href="http://www.0xfree.top/2015/12/08/android-build-system-make/">Android编译系统分析之make分析</a></li>
+</ul>
+<p>关注一些make执行过程中的几个关键点</p>
+<ul>
+<li><a href="http://www.0xfree.top/2015/12/22/android-build-system-keypoint-first/">Android编译系统分析之几个关键点（一）</a></li>
+<li><a href="http://www.0xfree.top/2015/12/28/android-build-system-keypoint-second/">Android编译系统分析之几个关键点（二）</a></li>
+<li><a href="http://www.0xfree.top/2016/01/08/android-build-systemui-keypoint-third/">Android编译系统分析之几个关键点（三）</a></li>
+</ul>
+<p>对一些独特的语法结构进行解析</p>
+<ul>
+<li><a href="http://www.0xfree.top/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/">PRODUCT_COPY_FILES语法解析</a></li>
+<li><a href="http://www.0xfree.top/2016/03/29/android-build-system-parse-PRODUCT_PROPERTY_OVERRIDES/">关于PRODUCT_PROPERTY_OVERRIDES属性的解析</a></li>
+</ul>
+<hr>
+<p>这篇文章的主要内容我们来分析关于模块配置文件Android.mk加载的一些关键的知识点</p>
+<h3 id="躲不开的背景知识”mm”与”mmm”"><a href="#躲不开的背景知识”mm”与”mmm”" class="headerlink" title="躲不开的背景知识”mm”与”mmm”"></a>躲不开的背景知识”mm”与”mmm”</h3><p>在分析模块配置文件Android.mk文件的加载过程之前，我们需要先了解一段背景知识，那就是Android.mk的使用情景是什么样的？  </p>
+<p>还记得我们在前边分析lunch的时候提到的源码的全编与模块编译吗？  </p>
+<p>控制全编与模块编译的命令就在envsetup.sh文件中定义，其中全编直接运行make，模块单编需要用到mm与mmm两条命令，定义如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">function findmakefile()</span><br><span class="line">&#123;</span><br><span class="line">    TOPFILE=build/core/envsetup.mk</span><br><span class="line">    local HERE=$PWD</span><br><span class="line">    T=</span><br><span class="line">    while [ \( ! \( -f $TOPFILE \) \) -a \( $PWD != &quot;/&quot; \) ]; do</span><br><span class="line">        T=`PWD= /bin/pwd`</span><br><span class="line">        if [ -f &quot;$T/Android.mk&quot; ]; then</span><br><span class="line">            echo $T/Android.mk</span><br><span class="line">            \cd $HERE</span><br><span class="line">            return</span><br><span class="line">        fi</span><br><span class="line">        \cd ..</span><br><span class="line">    done</span><br><span class="line">    \cd $HERE</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function mm()</span><br><span class="line">&#123;</span><br><span class="line">    local T=$(gettop)</span><br><span class="line">    local DRV=$(getdriver $T)</span><br><span class="line">    # If we&apos;re sitting in the root of the build tree, just do a</span><br><span class="line">    # normal make.</span><br><span class="line">    if [ -f build/core/envsetup.mk -a -f Makefile ]; then</span><br><span class="line">        $DRV make $@</span><br><span class="line">    else</span><br><span class="line">        # Find the closest Android.mk file.</span><br><span class="line">        local M=$(findmakefile)</span><br><span class="line">        local MODULES=</span><br><span class="line">        local GET_INSTALL_PATH=</span><br><span class="line">        local ARGS=</span><br><span class="line">        # Remove the path to top as the makefilepath needs to be relative</span><br><span class="line">        local M=`echo $M|sed &apos;s:&apos;$T&apos;/::&apos;`</span><br><span class="line">        if [ ! &quot;$T&quot; ]; then</span><br><span class="line">            echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot;</span><br><span class="line">        elif [ ! &quot;$M&quot; ]; then</span><br><span class="line">            echo &quot;Couldn&apos;t locate a makefile from the current directory.&quot;</span><br><span class="line">        else</span><br><span class="line">            for ARG in $@; do</span><br><span class="line">                case $ARG in</span><br><span class="line">                  GET-INSTALL-PATH) GET_INSTALL_PATH=$ARG;;</span><br><span class="line">                esac</span><br><span class="line">            done</span><br><span class="line">            if [ -n &quot;$GET_INSTALL_PATH&quot; ]; then</span><br><span class="line">              MODULES=</span><br><span class="line">              ARGS=GET-INSTALL-PATH</span><br><span class="line">            else</span><br><span class="line">              MODULES=all_modules</span><br><span class="line">              ARGS=$@</span><br><span class="line">            fi</span><br><span class="line">            ONE_SHOT_MAKEFILE=$M $DRV make -C $T -f build/core/main.mk $MODULES $ARGS</span><br><span class="line">        fi</span><br><span class="line">    fi</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>先看mm命令，如果运行这条命令的路径为TOP目录，那么就等价于直接使用make命令<br>如果不是，我们就以当前目录为基点，递归<strong>向上</strong>查找距离最近的Android.mk文件，这个查找的过程在<code>findmakefile()</code>函数中定义  </p>
+<p>Android编译系统在使用mm命令的时候为我们提供了一个参数，可以方便我们打印出所要编译模块的最终安装路径，这个参数就是<code>GET-INSTALL-PATH</code>，</p>
+<ul>
+<li>如果编译系统在检查到正在使用mm时加了这个参数，我们就不执行编译的操作，只打印这个参数的值  </li>
+</ul>
+<p>这个逻辑的实现其实只是将<code>GET-INSTALL-PATH</code>定义为了一个target，我们使用mm时，会将这个target传进去，从而调用到这个target定义的命令，我们后边遇到模块解析代码的时候就会看到这个target相关代码  </p>
+<ul>
+<li>如果没有这个参数，我们就指定编译全部的模块(all_modules)，然后将mm后边的参数全部作为MAKEGOALS传入  </li>
+</ul>
+<p>以上就是mm执行的全部过程，有三点需要注意：</p>
+<ul>
+<li>$DRV，这个变量的作用是加一些静态分析的选项以及路径</li>
+<li>ARG参数的添加可以让我们使用-B这样的make自带的参数</li>
+<li>ONE_SHOT_MAKEFILE是区别全编与模块编译的关键变量</li>
+</ul>
+<p>对于mmm函数，使用方法为直接指定Android.mk所在的文件夹，除此之外最终调用的命令与mm是一样的，有兴趣的读者可以自己来试着解析  </p>
+<p>了解了使用方法之后，mm在调用的时候会传入<code>ONE_SHOT_MAKEFILE</code>参数，这个参数是区别全编和模块编译的重点，接下来我们来具体看看这个参数带来的实质的影响  </p>
+<h3 id="模块文件加载解析过程"><a href="#模块文件加载解析过程" class="headerlink" title="模块文件加载解析过程"></a>模块文件加载解析过程</h3><p>如果读过我之前make解析文章的同学一定还记得include的顺序，没错，Android.mk文件的解析的主要代码是在build/core/main.mk文件中，附代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"># Before we go and include all of the module makefiles, stash away</span><br><span class="line"># the PRODUCT_* values so that later we can verify they are not modified.</span><br><span class="line">stash_product_vars:=true</span><br><span class="line">ifeq ($(stash_product_vars),true)</span><br><span class="line">  $(call stash-product-vars, __STASHED)</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">ifneq ($(ONE_SHOT_MAKEFILE),)</span><br><span class="line"># We&apos;ve probably been invoked by the &quot;mm&quot; shell function</span><br><span class="line"># with a subdirectory&apos;s makefile.</span><br><span class="line">include $(ONE_SHOT_MAKEFILE)</span><br><span class="line"># Change CUSTOM_MODULES to include only modules that were</span><br><span class="line"># defined by this makefile; this will install all of those</span><br><span class="line"># modules as a side-effect.  Do this after including ONE_SHOT_MAKEFILE</span><br><span class="line"># so that the modules will be installed in the same place they</span><br><span class="line"># would have been with a normal make.</span><br><span class="line">CUSTOM_MODULES := $(sort $(call get-tagged-modules,$(ALL_MODULE_TAGS)))</span><br><span class="line">FULL_BUILD :=</span><br><span class="line"># Stub out the notice targets, which probably aren&apos;t defined</span><br><span class="line"># when using ONE_SHOT_MAKEFILE.</span><br><span class="line">NOTICE-HOST-%: ;</span><br><span class="line">NOTICE-TARGET-%: ;</span><br><span class="line"></span><br><span class="line"># A helper goal printing out install paths</span><br><span class="line">.PHONY: GET-INSTALL-PATH</span><br><span class="line">GET-INSTALL-PATH:</span><br><span class="line">	@$(foreach m, $(ALL_MODULES), $(if $(ALL_MODULES.$(m).INSTALLED), \</span><br><span class="line">		echo &apos;INSTALL-PATH: $(m) $(ALL_MODULES.$(m).INSTALLED)&apos;;))</span><br><span class="line"></span><br><span class="line">else # ONE_SHOT_MAKEFILE</span><br><span class="line"></span><br><span class="line">ifneq ($(dont_bother),true)</span><br><span class="line">#</span><br><span class="line"># Include all of the makefiles in the system</span><br><span class="line">#</span><br><span class="line"></span><br><span class="line"># Can&apos;t use first-makefiles-under here because</span><br><span class="line"># --mindepth=2 makes the prunes not work.</span><br><span class="line">subdir_makefiles := \</span><br><span class="line">	$(shell build/tools/findleaves.py --prune=$(OUT_DIR) --prune=.repo --prune=.git $(subdirs) Android.mk)</span><br><span class="line"></span><br><span class="line">$(foreach mk, $(subdir_makefiles), $(info including $(mk) ...)$(eval include $(mk)))</span><br><span class="line"></span><br><span class="line">endif # dont_bother</span><br><span class="line"></span><br><span class="line">endif # ONE_SHOT_MAKEFILE</span><br><span class="line"></span><br><span class="line"># Now with all Android.mks loaded we can do post cleaning steps.</span><br><span class="line">include $(BUILD_SYSTEM)/post_clean.mk</span><br><span class="line"></span><br><span class="line">ifeq ($(stash_product_vars),true)</span><br><span class="line">  $(call assert-product-vars, __STASHED)</span><br><span class="line">endif</span><br></pre></td></tr></table></figure>
+<p>在真正的调用<code>ONE_SHOT_MAKEFILE</code>变量判断全编还是模块编译之前，我们还有一件事需要做：  </p>
+<p>暂存PRODUCT_*系列变量(<code>stash-product-vars</code>)  </p>
+<p>这项操作的用意很明显，我们对于Product级的配置已经结束，接下来加载的模块级别的配置是不能影响干扰到Product的相关配置，所以我们需要暂存变量，来方便后边比对是否修改了这些变量(<code>assert-product-vars</code>)  </p>
+<p>从这个操作我们也可以看出，Android编译系统对于Product配置在加载模块配置文件Android.mk文件之前就已经结束，从include文件顺序表中我们可以看到也就是在lunch的全部声明周期做完了Product的配置的加载，这里我们之所以不说是完成配置，而是完成加载，是因为对于PRODUCT_COPY_FILES这个变量我们还有操作需要处理，这块内容我们会在后序的文章中说明  </p>
+<p>接下来我们又遇到一个新的关键字TAG，如果编写过模块代码，那么对这个TAG应该不陌生，常用的定义有user,eng,tests,optional等，你可以指定对应的TAG，使得它在指定的编译类型中生效  </p>
+<p>这里使用一个<code>get-tagged-modules</code>函数来根据我们当前的编译的varient来挑选出合适的模块加入待编译列表  </p>
+<p>了解这个函数之前，我们需要知道传入的参数<code>ALL_MODULE_TAGS</code>的作用是什么  </p>
+<p>我们之前在解析各编译文件的作用时曾经提到过，envsetup.mk的作用主要是定义一些编译系统需要用到的宏，而definitions.mk文件则是用来定义一些公有的函数，这些公有函数主要用在模块编译规则文件Android.mk的编写，所以在遇到<code>ALL_MODULE_TAGS</code>这个变量，我们首先想到的就是去definitions.mk文件中查看，我们发现<br>definitions.mk中定义了<code>ALL_MODULE_TAGS</code>以及操作这个变量的相关函数，但是真正的为这个变量赋值的操作发生在base_rules.mk中，那么这个base_rules.mk与definitions.mk之间是什么关系呢？  </p>
+<h3 id="一个Android-mk的示例"><a href="#一个Android-mk的示例" class="headerlink" title="一个Android.mk的示例"></a>一个Android.mk的示例</h3><p>我们选择一个Android.mk来看看include之后发生了什么<br>示例Android.mk文件内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">LOCAL_PATH:= $(call my-dir)</span><br><span class="line"></span><br><span class="line">include $(CLEAR_VARS)</span><br><span class="line"></span><br><span class="line">LOCAL_MODULE_TAGS := optional</span><br><span class="line"></span><br><span class="line">LOCAL_SRC_FILES := \</span><br><span class="line">        $(call all-java-files-under, src)</span><br><span class="line"></span><br><span class="line">LOCAL_PACKAGE_NAME := Nfc</span><br><span class="line"></span><br><span class="line">LOCAL_JNI_SHARED_LIBRARIES := libnfc_mt6605_jni libmtknfc_dynamic_load_jni</span><br><span class="line"></span><br><span class="line">LOCAL_PROGUARD_ENABLED := disabled</span><br><span class="line"></span><br><span class="line">include $(BUILD_PACKAGE)</span><br></pre></td></tr></table></figure></p>
+<p>以上文件是一个NFC模块的Android.mk文件，我们从前边运行mm的流程可以得知，如果我们在NFC模块规则文件Android.mk文件所在的目录下运行mm，实际执行的操作是找到这个Android.mk文件，并将这个文件赋值给ONE_SHOT_MAKEFILE，然后在main.mk文件中加载进来，也就是我们会在main.mk文件中依次执行以上文件的内容：</p>
+<ul>
+<li>使用$(CLEAR_VARS)清零各变量</li>
+<li>定义几个以LOCAL_*开头的变量</li>
+<li>加载一个对应的编译规则文件$(BUILD_PACKAGE)</li>
+</ul>
+<p>我们就以这个文件为例，来解析一下一般Android.mk文件加载的流程：<br>首先$(CLEAR_VARS)对应的是一个makefile文件clear_vars.mk，内容是对各个LOCAL_*变量的清零操作，这个宏的定义是在config.mk文件中，也就是在加载模块规则文件Android.mk文件之前  </p>
+<p>然后$(BUILD_PACKAGE)也是一个makefile文件package.mk，内容是关于对一个package编译的规则，Android编译系统定义了一系列的宏来将编译各种类型模块的规则打包，我们只需要在每个模块定义的最后引用就可以  </p>
+<p>了解以上两点，我们就可以使用之前分析make命令运行流程的方法来分析这个示例文件被include到main.mk之后的执行过程，以下是include Android.mk文件之后的include文件顺序：  </p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">#模块编译时的include顺序,以package.mk为例</span><br><span class="line">config<span class="selector-class">.mk</span> (</span><br><span class="line">    <span class="number">62</span>-<span class="number">97</span>: BUILD_SYSTEM_INTERNAL_FILE (</span><br><span class="line">        CLEAR_VARS:clear_vars.mk</span><br><span class="line">        ......</span><br><span class="line">        BUILD_STATIC_LIBRARY:static_library.mk</span><br><span class="line">        BUILD_SHARED_LIBRARY:shared_library.mk</span><br><span class="line">        BUILD_PACKAGE:package<span class="selector-class">.mk</span> (</span><br><span class="line">            <span class="number">6</span>:include multilib.mk</span><br><span class="line">            <span class="number">53</span>:include module_arch_supported.mk</span><br><span class="line">            <span class="number">55</span>:include package_internal<span class="selector-class">.mk</span> (</span><br><span class="line">                <span class="number">204</span>:include android_manifest.mk</span><br><span class="line">                <span class="number">207</span>:include java<span class="selector-class">.mk</span> (</span><br><span class="line">                    <span class="number">307</span>:include base_rules<span class="selector-class">.mk</span> (</span><br><span class="line">                        <span class="number">165</span>:include configure_module_stem.mk</span><br><span class="line">                        <span class="number">688</span>:include $(BUILD_NOTICE_FILE)</span><br><span class="line">                    )</span><br><span class="line">                    <span class="number">314</span>:include dex_preopt_odex_install.mk</span><br><span class="line">                )</span><br><span class="line">                <span class="number">356</span>:include install_jni_libs<span class="selector-class">.mk</span> (</span><br><span class="line">                    <span class="number">81</span>:include install_jni_libs_internal.mk</span><br><span class="line">                )</span><br><span class="line">            )</span><br><span class="line">        )</span><br><span class="line">        BUILD_PHONY_PACKAGE:phone_package.mk</span><br><span class="line">        ......</span><br><span class="line">        BUILD_PREBUILT:prebuilt.mk</span><br><span class="line">        ......</span><br><span class="line">    )</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>从以上的include顺序图中，我们可以很清晰的发现base_rulse.mk的身影，这里我们只关心<code>ALL_MODULE_TAGS</code>，所以直接来看base_rules.mk文件中对这个变量的处理：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">my_module_tags := $(LOCAL_MODULE_TAGS)</span><br><span class="line"></span><br><span class="line">LOCAL_UNINSTALLABLE_MODULE := $(strip $(LOCAL_UNINSTALLABLE_MODULE))</span><br><span class="line">my_module_tags := $(sort $(my_module_tags))</span><br><span class="line">ifeq (,$(my_module_tags))</span><br><span class="line">  my_module_tags := optional</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line"># User tags are not allowed anymore.  Fail early because it will not be installed</span><br><span class="line"># like it used to be.</span><br><span class="line">ifneq ($(filter $(my_module_tags),user),)</span><br><span class="line">  $(warning *** Module name: $(LOCAL_MODULE))</span><br><span class="line">  $(warning *** Makefile location: $(LOCAL_MODULE_MAKEFILE))</span><br><span class="line">  $(warning * )</span><br><span class="line">  $(warning * Module is attempting to use the &apos;user&apos; tag.  This)</span><br><span class="line">  $(warning * used to cause the module to be installed automatically.)</span><br><span class="line">  $(warning * Now, the module must be listed in the PRODUCT_PACKAGES)</span><br><span class="line">  $(warning * section of a product makefile to have it installed.)</span><br><span class="line">  $(warning * )</span><br><span class="line">  $(error user tag detected on module.)</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line"># Only the tags mentioned in this test are expected to be set by module</span><br><span class="line"># makefiles. Anything else is either a typo or a source of unexpected</span><br><span class="line"># behaviors.</span><br><span class="line">ifneq ($(filter-out debug eng tests optional samples,$(my_module_tags)),)</span><br><span class="line">$(warning unusual tags $(my_module_tags) on $(LOCAL_MODULE) at $(LOCAL_PATH))</span><br><span class="line">endif</span><br></pre></td></tr></table></figure>
+<p>从上到下，依次说明了这几件事：</p>
+<ul>
+<li>如果<code>LOCAL_MODULE_TAG</code>未定义，那么默认使用optional</li>
+<li>user这个TAG已经废弃，如果需要定义这个TAG，可以将其加入到PRODUCT_PACKAGES变量中</li>
+<li>TAG只能是<code>debug</code>，<code>eng</code>，<code>tests</code>，<code>optional</code>，<code>samples</code>这几个  </li>
+</ul>
+<p>我们在这里拿到tag之后，就需要对其进行处理：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># Keep track of all the tags we&apos;ve seen.</span><br><span class="line">ALL_MODULE_TAGS := $(sort $(ALL_MODULE_TAGS) $(my_module_tags))</span><br><span class="line"></span><br><span class="line"># Add this module to the tag list of each specified tag.</span><br><span class="line"># Don&apos;t use &quot;+=&quot;. If the variable hasn&apos;t been set with &quot;:=&quot;,</span><br><span class="line"># it will default to recursive expansion.</span><br><span class="line">$(foreach tag,$(my_module_tags),\</span><br><span class="line">    $(eval ALL_MODULE_TAGS.$(tag) := \</span><br><span class="line">        $(ALL_MODULE_TAGS.$(tag)) \</span><br><span class="line">        $(LOCAL_INSTALLED_MODULE)))</span><br></pre></td></tr></table></figure></p>
+<p>这个示例中Android.mk只定义了一个模块，所以这里的ALL_MODULE_TAGS就是Android.mk定义的<code>LOCAL_MODULTE_TAG</code>，如果是多个模块，这里就是多个模块的综合<br>然后使用不同的TAG后缀，将对应TAG的模块赋值给<code>ALL_MODULE_TAGS.$(tag)</code>，这里模块只有一个，所以其值也是唯一，这样对应TAG的模块我们就可以拿到了  </p>
+<p>我们回过头继续看CUSTOM_MODULE的值是需要<code>get-tagged-modules</code>取出来的，我们来看这个函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">define modules-for-tag-list</span><br><span class="line">$(sort $(foreach tag,$(1),$(ALL_MODULE_TAGS.$(tag))))</span><br><span class="line">endef</span><br><span class="line"></span><br><span class="line"># Same as modules-for-tag-list, but operates on</span><br><span class="line"># ALL_MODULE_NAME_TAGS.</span><br><span class="line"># $(1): tag list</span><br><span class="line">define module-names-for-tag-list</span><br><span class="line">$(sort $(foreach tag,$(1),$(ALL_MODULE_NAME_TAGS.$(tag))))</span><br><span class="line">endef</span><br><span class="line"></span><br><span class="line"># Given an accept and reject list, find the matching</span><br><span class="line"># set of targets.  If a target has multiple tags and</span><br><span class="line"># any of them are rejected, the target is rejected.</span><br><span class="line"># Reject overrides accept.</span><br><span class="line"># $(1): list of tags to accept</span><br><span class="line"># $(2): list of tags to reject</span><br><span class="line">#TODO(dbort): do $(if $(strip $(1)),$(1),$(ALL_MODULE_TAGS))</span><br><span class="line">#TODO(jbq): as of 20100106 nobody uses the second parameter</span><br><span class="line">define get-tagged-modules</span><br><span class="line">$(filter-out \</span><br><span class="line">	$(call modules-for-tag-list,$(2)), \</span><br><span class="line">	    $(call modules-for-tag-list,$(1)))</span><br><span class="line">endef</span><br></pre></td></tr></table></figure></p>
+<p><code>get-tagged-modules</code>有两个参数，第一个参数对应的是我们想要取出的模块的tag，第二个参数对应我们不想取出的模块对应的tag，获取CUSTOM_MODULE时，只传入了我们想要取出的模块tag，所以我们我们看到，对于传入的要取出的对应tag的模块，我们只是从ALL_MODULE_TAGS对应tag后缀中取出即可  </p>
+<p>虽然一个简单的模块编译规则绕了这么一大圈，但是这只是对于单个模块而言，这套模块编译系统的强大之处对于多个模块编译才能真正体现出来，也就是我们进行全编的时候才会见识到它真正的威力  </p>
+<p>ALL_DEFAULT_INSTALLED_MODULES<br>挑选完模块之后，我们就看到前边解析mm时要到的打印目标模块安装路径的那个target，然后模块的单编也就完成了参数的传入  </p>
+<p>回过头来我们看看全编过程对Android.mk文件的处理，当include全部的Android.mk之后，我们会发现所有的模块文件都各自被这两条语句包括着：<br><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">include</span> <span class="variable">$(CLEAR_VARS)</span></span><br><span class="line"></span><br><span class="line">......</span><br><span class="line"></span><br><span class="line"><span class="keyword">include</span> <span class="variable">$(BUILD_PACKAGE)</span></span><br></pre></td></tr></table></figure></p>
+<p>我们前边已经讲到过CLEAR_VARS就是一个全部LOCAL_<em>变量的清零操作的mk合集，而BUILD_</em>这类型的文件定义了各种类型的模块的编译规则　　</p>
+<p>这里还有一个<code>dont_bother</code>的问题，<code>dont_bother</code>的出现，是因为Android编译系统定义了一些特殊的目标，在编译这些目标时，不需要加载Android.mk文件，具体的定义在build/core/main.mk<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"># These goals don&apos;t need to collect and include Android.mks/CleanSpec.mks</span><br><span class="line"># in the source tree.</span><br><span class="line">dont_bother_goals := clean clobber dataclean installclean \</span><br><span class="line">    help out \</span><br><span class="line">    snod systemimage-nodeps \</span><br><span class="line">    stnod systemtarball-nodeps \</span><br><span class="line">    userdataimage-nodeps userdatatarball-nodeps \</span><br><span class="line">    cacheimage-nodeps \</span><br><span class="line">    vendorimage-nodeps \</span><br><span class="line">    ramdisk-nodeps \</span><br><span class="line">    bootimage-nodeps</span><br><span class="line"></span><br><span class="line">ifneq ($(filter $(dont_bother_goals), $(MAKECMDGOALS)),)</span><br><span class="line">dont_bother := true</span><br><span class="line">endif</span><br></pre></td></tr></table></figure></p>
+<p>包括clean, help, 以及一些image的打包等，这些目标都是独立的，不需要依赖，因此对于代码相关的模块是不需要参与编译的  </p>
+<h3 id="找到系统所有的Android-mk"><a href="#找到系统所有的Android-mk" class="headerlink" title="找到系统所有的Android.mk"></a>找到系统所有的Android.mk</h3><p>对于全编过程中所有模块文件的加载我们用到了<code>findleaves.py</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line">import os</span><br><span class="line">import sys</span><br><span class="line"></span><br><span class="line">def perform_find(mindepth, prune, dirlist, filename):</span><br><span class="line">  result = []</span><br><span class="line">  pruneleaves = set(map(lambda x: os.path.split(x)[1], prune))</span><br><span class="line">  for rootdir in dirlist:</span><br><span class="line">    rootdepth = rootdir.count(&quot;/&quot;)</span><br><span class="line">    for root, dirs, files in os.walk(rootdir, followlinks=True):</span><br><span class="line">      # prune</span><br><span class="line">      check_prune = False</span><br><span class="line">      for d in dirs:</span><br><span class="line">        if d in pruneleaves:</span><br><span class="line">          check_prune = True</span><br><span class="line">          break</span><br><span class="line">      if check_prune:</span><br><span class="line">        i = 0</span><br><span class="line">        while i &lt; len(dirs):</span><br><span class="line">          if dirs[i] in prune:</span><br><span class="line">            del dirs[i]</span><br><span class="line">          else:</span><br><span class="line">            i += 1</span><br><span class="line">      # mindepth</span><br><span class="line">      if mindepth &gt; 0:</span><br><span class="line">        depth = 1 + root.count(&quot;/&quot;) - rootdepth</span><br><span class="line">        if depth &lt; mindepth:</span><br><span class="line">          continue</span><br><span class="line">      # match</span><br><span class="line">      if filename in files:</span><br><span class="line">        result.append(os.path.join(root, filename))</span><br><span class="line">        del dirs[:]</span><br><span class="line">  return result</span><br><span class="line"></span><br><span class="line">def usage():</span><br><span class="line">  sys.stderr.write(&quot;&quot;&quot;Usage: %(progName)s [&lt;options&gt;] &lt;dirlist&gt; &lt;filename&gt;</span><br><span class="line">Options:</span><br><span class="line">   --mindepth=&lt;mindepth&gt;</span><br><span class="line">       Both behave in the same way as their find(1) equivalents.</span><br><span class="line">   --prune=&lt;dirname&gt;</span><br><span class="line">       Avoids returning results from inside any directory called &lt;dirname&gt;</span><br><span class="line">       (e.g., &quot;*/out/*&quot;). May be used multiple times.</span><br><span class="line">&quot;&quot;&quot; % &#123;</span><br><span class="line">      &quot;progName&quot;: os.path.split(sys.argv[0])[1],</span><br><span class="line">    &#125;)</span><br><span class="line">  sys.exit(1)</span><br><span class="line"></span><br><span class="line">def main(argv):</span><br><span class="line">  mindepth = -1</span><br><span class="line">  prune = []</span><br><span class="line">  i=1</span><br><span class="line">  while i&lt;len(argv) and len(argv[i])&gt;2 and argv[i][0:2] == &quot;--&quot;:</span><br><span class="line">    arg = argv[i]</span><br><span class="line">    if arg.startswith(&quot;--mindepth=&quot;):</span><br><span class="line">      try:</span><br><span class="line">        mindepth = int(arg[len(&quot;--mindepth=&quot;):])</span><br><span class="line">      except ValueError:</span><br><span class="line">        usage()</span><br><span class="line">    elif arg.startswith(&quot;--prune=&quot;):</span><br><span class="line">      p = arg[len(&quot;--prune=&quot;):]</span><br><span class="line">      if len(p) == 0:</span><br><span class="line">        usage()</span><br><span class="line">      prune.append(p)</span><br><span class="line">    else:</span><br><span class="line">      usage()</span><br><span class="line">    i += 1</span><br><span class="line">  if len(argv)-i &lt; 2: # need both &lt;dirlist&gt; and &lt;filename&gt;</span><br><span class="line">    usage()</span><br><span class="line">  dirlist = argv[i:-1]</span><br><span class="line">  filename = argv[-1]</span><br><span class="line">  results = list(set(perform_find(mindepth, prune, dirlist, filename)))</span><br><span class="line">  results.sort()</span><br><span class="line">  for r in results:</span><br><span class="line">    print r</span><br><span class="line"></span><br><span class="line">if __name__ == &quot;__main__&quot;:</span><br><span class="line">  main(sys.argv)</span><br></pre></td></tr></table></figure>
+<p>虽然函数内容很少，但是我们可以从中看出一些细节实现，所以我们在这里简单分析一下：<br>首先来看使用方法，就是定义的函数usage()，我们从  </p>
+<p><code>Usage: %(progName)s [&lt;options&gt;] &lt;dirlist&gt; &lt;filename&gt;</code>  </p>
+<p>可以看出函数后加两个可选参数和两个不可省略参数，我们分开来看他们的规则</p>
+<ol>
+<li>可选参数<ul>
+<li>–mindepth：相对于查找目录的最浅深度，如果没有达到，不会查找filename，可以有多个参数，取最后一个定义</li>
+<li>–prune：略过查找的目录，可以定义多个目录</li>
+</ul>
+</li>
+<li>不可省略参数<ul>
+<li>dirlist：要执行查找操作的目录列表，需要有１个或多个参数</li>
+<li>filename：参数唯一，需要执行查找的文件名</li>
+</ul>
+</li>
+</ol>
+<p>Android编译系统在这里使用的命令是  </p>
+<p><code>build/tools/findleaves.py --prune=$(OUT_DIR) --prune=.repo --prune=.git $(subdirs) Android.mk</code>  </p>
+<p>也就是排除了out，.repo，.git三个目录，在根目录下查找Android.mk文件  </p>
+<p>main函数为入口函数，在perform_find函数之前主要是对参数进行处理，将需要排除的目录放入prune数组中，执行实际查找的函数主要在perform_find中，我们来看  </p>
+<pre><code class="python?linenums">def perform_find(mindepth, prune, dirlist, filename):
+  result = []
+  pruneleaves = set(map(lambda x: os.path.split(x)[1], prune))
+  for rootdir in dirlist:
+    rootdepth = rootdir.count(&quot;/&quot;)
+    for root, dirs, files in os.walk(rootdir, followlinks=True):
+      # prune
+      check_prune = False
+      for d in dirs:
+        if d in pruneleaves:
+          check_prune = True
+          break
+      if check_prune:
+        i = 0
+        while i &lt; len(dirs):
+          if dirs[i] in prune:
+            del dirs[i]
+          else:
+            i += 1
+      # mindepth
+      if mindepth &gt; 0:
+        depth = 1 + root.count(&quot;/&quot;) - rootdepth
+        if depth &lt; mindepth:
+          continue
+      # match
+      if filename in files:
+        result.append(os.path.join(root, filename))
+        del dirs[:]
+  return result
+</code></pre>
+<p>这个函数主要做了以下几件事：</p>
+<ul>
+<li>首先记录了目录深度，用于在后边判断是否达到最浅目录深度(mindepth)</li>
+<li>然后遍历传入的目录，也就是源码根目录</li>
+<li>检查是否需要在当前目录略过指定的目录（加快搜索速度）</li>
+<li>如果检查到需要略过的目录，删掉当前目录下的子目录中所有指定的目录</li>
+<li>判断是否达到最浅的搜索深度</li>
+<li>如果文件名匹配，将它放到reslut数组中</li>
+<li>返回查找到的所有的Android.mk  </li>
+</ul>
+<p><strong>函数很简单，但是需要注意两点：</strong></p>
+<ul>
+<li>如果最小目录深度mindepth没有达到，那么不会匹配当前目录的文件，直到达到目录深度才会执行开始匹配</li>
+<li>如果当前文件夹下匹配到了Android.mk，那么就清空子目录列表，也就是停止继续向下查找  </li>
+</ul>
+<p>以上两点是很重要的，第一点可以让我们可以自由的控制从哪个目录深度开始查找，第二点可以让我们自由的拓展目录的深度与广度，可以自由的控制深度目录下的模块的编译与否，Android编译系统提供了两个函数来搭配这种查找方式<code>all-makefiles-under</code>与<code>first-makefiles-under</code></p>
+<h3 id="一个小插曲"><a href="#一个小插曲" class="headerlink" title="一个小插曲"></a>一个小插曲</h3><p>脚本解析完了，这里还有一个小插曲说明一下：<br>findleaves.py是一个python脚本，这点我们已经了解，你可能会想到为什么不是一个shell脚本，额，没错，你想的没错，这之前确实是一个bash脚本，09年的８月份被替换掉了，google支持python的时间还真是久远，原因是因为可以大大缩短解析的时间</p>
+<p>下边作者当初的提交，让我们来看看来究竟比bash强大在什么地方<br><a href="https://imgchr.com/i/FenUfJ" target="_blank" rel="noopener"><img src="https://s1.ax1x.com/2018/11/29/FenUfJ.md.png" alt="使用python脚本替换bash脚本的git变更提交"></a></p>
+<p>作者在提交里说明，使用python重写的原因有两个</p>
+<ul>
+<li>可以使用多重prune来排除目录</li>
+<li>有效的缩短查找时间</li>
+</ul>
+<p>确实，从作者的提交记录来看，从30秒缩减到不到1秒，确实提升很多，我们看到这里已对python顶礼膜拜，敬仰之情滔滔不绝  </p>
+<p><strong>然并xxx</strong>  </p>
+<p>其实shell脚本该实现的也都已经实现，并且在搜索性能上不仅不差python，还更胜一筹，下图是实际的对比结果</p>
+<p><a href="https://imgchr.com/i/FenNY4" target="_blank" rel="noopener"><img src="https://s1.ax1x.com/2018/11/29/FenNY4.md.png" alt="实际比对结果"></a></p>
+<p>作者当初选择python重写，一者可能是因为喜爱python，另一个原因可能是他根本不会用那个shell脚本….  </p>
+<p>好了，小插曲过后，我们回过头来继续研究，我们读了两个脚本之后，也明白了Android.mk文件的搜寻条件，简而言之：<br>从$(subdirs)也就是源码根目录开始搜索，排除.repo，out和.git目录，搜索各个目录下的Android.mk并打印，关于其中的查找规则，前边已经说明，我们不再赘述  </p>
+<h3 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h3><p>至此，关于Android.mk相关的内容也已经解析完毕，对于模块编译的内容的解析可能不是那么深，因为模块编译有单独的一套规则，且相对独立，在一般的系统开发中的出问题的可能性比较小，所以对于这方面待日后遇到问题再来详细补充</p>
+
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://www.0xfree.top">0xfree</a>
+            <p>原文链接：<a href="http://www.0xfree.top/2016/01/08/android-build-systemui-keypoint-third/">http://www.0xfree.top/2016/01/08/android-build-systemui-keypoint-third/</a>
+            <p>发表日期：<a href="http://www.0xfree.top/2016/01/08/android-build-systemui-keypoint-third/">January 8th 2016, 11:20:35 pm</a>
+            <p>更新日期：<a href="http://www.0xfree.top/2016/01/08/android-build-systemui-keypoint-third/">January 11th 2016, 8:13:51 pm</a>
+            <p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href= "/2015/12/28/android-build-system-keypoint-second/" title= "Android编译系统分析之几个关键点（二）">
+                    <div class="prevTitle">Android编译系统分析之几个关键点（二）</div>
+                </a>
+            
+        </li>
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href= "/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/" title= "PRODUCT_COPY_FILES语法解析">
+                    <div class="nextTitle">PRODUCT_COPY_FILES语法解析</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    
+    <!-- partial('_partial/comment/changyan') -->
+    <!--PC版-->
+
+
+    
+    
+    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <div id="comment"></div>
+    <script>
+    new Valine({
+        el: '#comment' ,
+        notify:false, 
+        verify:false, 
+        appId: "ntHALp5naE0BMs0bOxMw9jmN-gzGzoHsz",
+        appKey: "2Y1bCJ9hhKzMEjisEm2hIAME",
+        placeholder: "gogo",
+        path:window.location.pathname, 
+        avatar:'mm' 
+    });
+    </script>
+
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:daniel2008lee@163.com" class="iconfont-archer email" title=email ></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/lixiao123" class="iconfont-archer github" target="_blank" title=github></a>
+            
+        
+    
+        
+            
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/myself-low.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+            
+                <a href="https://www.zhihu.com/people/li-xiao-92-82/activities" class="iconfont-archer zhihu" target="_blank" title=zhihu></a>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#躲不开的背景知识”mm”与”mmm”"><span class="toc-number">1.</span> <span class="toc-text">躲不开的背景知识”mm”与”mmm”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#模块文件加载解析过程"><span class="toc-number">2.</span> <span class="toc-text">模块文件加载解析过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一个Android-mk的示例"><span class="toc-number">3.</span> <span class="toc-text">一个Android.mk的示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#找到系统所有的Android-mk"><span class="toc-number">4.</span> <span class="toc-text">找到系统所有的Android.mk</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一个小插曲"><span class="toc-number">5.</span> <span class="toc-text">一个小插曲</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#结束语"><span class="toc-number">6.</span> <span class="toc-text">结束语</span></a></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 25
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2020 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/07</span><a class="archive-post-title" href= "/2020/06/07/how-to-reproguard-by-mapping/" >如何通过 Mapping 文件反混淆</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/11</span><a class="archive-post-title" href= "/2019/11/11/android-jsbridge/" >一篇写给 Android 刚入门小伙伴的 JSBridge 文章</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/31</span><a class="archive-post-title" href= "/2019/08/31/git_and_gerrit/" >Git 与 Gerrit</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/12</span><a class="archive-post-title" href= "/2019/08/12/listview-scrollmode-parse/" >你要知道的 ListView 5种滑动模式全在这里了</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/01</span><a class="archive-post-title" href= "/2019/07/01/android-measurespec-layoutparams/" >MeasureSpec 与 LayoutParams 不得不说的二三事</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/03</span><a class="archive-post-title" href= "/2019/05/03/glide-contents/" >glide-contents</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/22</span><a class="archive-post-title" href= "/2019/04/22/how-to-build-android-source-code/" >从零开始搭建Android源码调试环境</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2018 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/18</span><a class="archive-post-title" href= "/2018/12/18/invalidate-of-choreographer/" >invalidate 三部曲之历经 Choreographer</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/13</span><a class="archive-post-title" href= "/2018/10/13/invalidate-of-invalidate/" >invalidate 三部曲之始于 invalidate</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/12</span><a class="archive-post-title" href= "/2018/10/12/trilogy-of-invalidate/" >invalidate 三部曲序</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span><a class="archive-post-title" href= "/2018/06/02/why-it-is-vsync/" >为什么是VSYNC</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/09</span><a class="archive-post-title" href= "/2018/01/09/android-touch-event-dispatch/" >触摸事件分析</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2017 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/07</span><a class="archive-post-title" href= "/2017/08/07/android-powerui/" >低电量提醒</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/14</span><a class="archive-post-title" href= "/2017/04/14/android-quicksettings-wifi/" >快捷开关之无线网路</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/05</span><a class="archive-post-title" href= "/2017/03/05/android-quicksettings-mobiledata/" >快捷开关之移动数据</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2016 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/29</span><a class="archive-post-title" href= "/2016/03/29/android-build-system-parse-PRODUCT_PROPERTY_OVERRIDES/" >关于PRODUCT_PROPERTY_OVERRIDES属性的解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span><a class="archive-post-title" href= "/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/" >PRODUCT_COPY_FILES语法解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/08</span><a class="archive-post-title" href= "/2016/01/08/android-build-systemui-keypoint-third/" >Android编译系统分析之几个关键点（三）</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2015 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/28</span><a class="archive-post-title" href= "/2015/12/28/android-build-system-keypoint-second/" >Android编译系统分析之几个关键点（二）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/22</span><a class="archive-post-title" href= "/2015/12/22/android-build-system-keypoint-first/" >Android编译系统分析之几个关键点（一）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span><a class="archive-post-title" href= "/2015/12/08/android-build-system-make/" >Android编译系统分析之make分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span><a class="archive-post-title" href= "/2015/12/01/android-build-system-lunch/" >Android编译系统分析之lunch分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/25</span><a class="archive-post-title" href= "/2015/11/25/gentoo-local-overlay/" >【译】Gentoo Local Overlay</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/24</span><a class="archive-post-title" href= "/2015/11/24/gentoo-basic-guide-ebuilds/" >【译】如何书写 Gentoo Ebuilds 的基本规则</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/05</span><a class="archive-post-title" href= "/2015/11/05/android-build-system-envsetup/" >source build/envsetup.sh 做了什么？</a>
+        </li>
+    
+    </div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="lunch"><span class="iconfont-archer">&#xe606;</span>lunch</span>
+    
+        <span class="sidebar-tag-name" data-tags="android"><span class="iconfont-archer">&#xe606;</span>android</span>
+    
+        <span class="sidebar-tag-name" data-tags="compile"><span class="iconfont-archer">&#xe606;</span>compile</span>
+    
+        <span class="sidebar-tag-name" data-tags="envsetup"><span class="iconfont-archer">&#xe606;</span>envsetup</span>
+    
+        <span class="sidebar-tag-name" data-tags="build"><span class="iconfont-archer">&#xe606;</span>build</span>
+    
+        <span class="sidebar-tag-name" data-tags="makefile"><span class="iconfont-archer">&#xe606;</span>makefile</span>
+    
+        <span class="sidebar-tag-name" data-tags="make"><span class="iconfont-archer">&#xe606;</span>make</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_COPY_FILES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_COPY_FILES</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_PROPERTY_OVERRIDES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_PROPERTY_OVERRIDES</span>
+    
+        <span class="sidebar-tag-name" data-tags="jsbridge"><span class="iconfont-archer">&#xe606;</span>jsbridge</span>
+    
+        <span class="sidebar-tag-name" data-tags="html"><span class="iconfont-archer">&#xe606;</span>html</span>
+    
+        <span class="sidebar-tag-name" data-tags="view"><span class="iconfont-archer">&#xe606;</span>view</span>
+    
+        <span class="sidebar-tag-name" data-tags="measureSpec"><span class="iconfont-archer">&#xe606;</span>measureSpec</span>
+    
+        <span class="sidebar-tag-name" data-tags="layoutParams"><span class="iconfont-archer">&#xe606;</span>layoutParams</span>
+    
+        <span class="sidebar-tag-name" data-tags="PowerUI"><span class="iconfont-archer">&#xe606;</span>PowerUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="SystemUI"><span class="iconfont-archer">&#xe606;</span>SystemUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="quickSettings"><span class="iconfont-archer">&#xe606;</span>quickSettings</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifiTIle"><span class="iconfont-archer">&#xe606;</span>wifiTIle</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifi"><span class="iconfont-archer">&#xe606;</span>wifi</span>
+    
+        <span class="sidebar-tag-name" data-tags="touchevent"><span class="iconfont-archer">&#xe606;</span>touchevent</span>
+    
+        <span class="sidebar-tag-name" data-tags="gentoo"><span class="iconfont-archer">&#xe606;</span>gentoo</span>
+    
+        <span class="sidebar-tag-name" data-tags="ebuild"><span class="iconfont-archer">&#xe606;</span>ebuild</span>
+    
+        <span class="sidebar-tag-name" data-tags="linux"><span class="iconfont-archer">&#xe606;</span>linux</span>
+    
+        <span class="sidebar-tag-name" data-tags="overlay"><span class="iconfont-archer">&#xe606;</span>overlay</span>
+    
+        <span class="sidebar-tag-name" data-tags="local"><span class="iconfont-archer">&#xe606;</span>local</span>
+    
+        <span class="sidebar-tag-name" data-tags="Git"><span class="iconfont-archer">&#xe606;</span>Git</span>
+    
+        <span class="sidebar-tag-name" data-tags="Gerrit"><span class="iconfont-archer">&#xe606;</span>Gerrit</span>
+    
+        <span class="sidebar-tag-name" data-tags="ubuntu"><span class="iconfont-archer">&#xe606;</span>ubuntu</span>
+    
+        <span class="sidebar-tag-name" data-tags="invalidate"><span class="iconfont-archer">&#xe606;</span>invalidate</span>
+    
+        <span class="sidebar-tag-name" data-tags="listView"><span class="iconfont-archer">&#xe606;</span>listView</span>
+    
+        <span class="sidebar-tag-name" data-tags="scrollMode"><span class="iconfont-archer">&#xe606;</span>scrollMode</span>
+    
+        <span class="sidebar-tag-name" data-tags="performance"><span class="iconfont-archer">&#xe606;</span>performance</span>
+    
+        <span class="sidebar-tag-name" data-tags="vsync"><span class="iconfont-archer">&#xe606;</span>vsync</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br/>
+    1、请确保node版本大于6.2<br/>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br/>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br/>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+        <span class="sidebar-category-name" data-categories="Android编译系统解析"><span class="iconfont-archer">&#xe60a;</span>Android编译系统解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Android"><span class="iconfont-archer">&#xe60a;</span>Android</span>
+    
+        <span class="sidebar-category-name" data-categories="View解析"><span class="iconfont-archer">&#xe60a;</span>View解析</span>
+    
+        <span class="sidebar-category-name" data-categories="SystemUI解析"><span class="iconfont-archer">&#xe60a;</span>SystemUI解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Gentoo"><span class="iconfont-archer">&#xe60a;</span>Gentoo</span>
+    
+        <span class="sidebar-category-name" data-categories="效率工具"><span class="iconfont-archer">&#xe60a;</span>效率工具</span>
+    
+        <span class="sidebar-category-name" data-categories="Android性能调优"><span class="iconfont-archer">&#xe60a;</span>Android性能调优</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "0xfree"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script>
+    
+    <!-- baidu static -->
+    <script>
+      (function(){
+          var bp = document.createElement('script');
+          var curProtocol = window.location.protocol.split(':')[0];
+          if (curProtocol === 'https') {
+              bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+          }
+          else {
+              bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+          }
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(bp, s);
+      })();
+    </script>
+    </body>
+</html>

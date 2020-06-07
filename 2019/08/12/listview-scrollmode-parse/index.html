@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="0xfree">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="0xfree">
+    
+    <meta name="keywords" content="android,build-system,0xfree-blog">
+    
+    <meta name="description" content="Read The Fuck Code">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>你要知道的 ListView 5种滑动模式全在这里了 · 0xfree&#39;s Blog</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/favicon.ico">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?7a3e0de2a2409ac715977a70cebe1750";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    
+    <!-- 谷歌统计  -->
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-131092737-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >0xfree&#39;s Blog.</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">你要知道的 ListView 5种滑动模式全在这里了</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href=/>0xfree's Blog.</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+
+height:50vh;
+">
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(https://source.unsplash.com/1600x900/?code)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            你要知道的 ListView 5种滑动模式全在这里了
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "listView">listView</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "scrollMode">scrollMode</a>
+    
+</div>
+                
+                
+                    <div class="post-intro-read">
+                        <span>字数统计: <span class="post-count word-count">4.5k</span>阅读时长: <span class="post-count reading-time">17 min</span></span>
+                    </div>
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2019/08/12</span>
+                    <!-- 
+                    <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                        <span class="iconfont-archer">&#xe602;</span>
+                        <span id="busuanzi_value_page_pv"></span>
+                    </span>
+                     -->
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <p>前段时间在使用 ListView 的过程中，需要对一个子 Item 优化横向 Bannar 的滑动体验，于是借此机会，深入了解了一下 ListView 滑动的一些知识，来探究一下，一个 View 滑动，究竟需要做哪些事情。</p>
+<h2 id="滑动模式基本介绍"><a href="#滑动模式基本介绍" class="headerlink" title="滑动模式基本介绍"></a>滑动模式基本介绍</h2><p>ListView 的滑动模式使用变量 mTouchMode 来表示，分为以下几种模式：</p>
+<table>
+<thead>
+<tr>
+<th>mTouchMode</th>
+<th>注释</th>
+<th>解析</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TOUCH_MODE_REST</td>
+<td>Indicates that we are not in the middle of a touch gesture</td>
+<td>标识当前未处于滑动手势中</td>
+<td>用于重置当前滑动状态</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_DOWN</td>
+<td>Indicates we just received the touch event and we are waiting to see if the it is a tap or a scroll gesture</td>
+<td>标识仅仅是接到了触摸事件，还需要进一步判断是点按事件还是滑动手势</td>
+<td></td>
+</tr>
+<tr>
+<td>TOUCH_MODE_TAP</td>
+<td>Indicates the touch has been recognized as a tap and we are now waiting to see if the touch  is a longpress</td>
+<td>标识触摸事件已经被识别为点按事件，还需要进一步判断是不是长按事件</td>
+<td></td>
+</tr>
+<tr>
+<td>TOUCH_MODE_DONE_WAITING</td>
+<td>Indicates we have waited for everything we can wait for, but the user’s finger is still down</td>
+<td>标识我们已经等了很久，但是用户的手势还是处于down状态</td>
+<td></td>
+</tr>
+<tr>
+<td>TOUCH_MODE_SCROLL</td>
+<td>Indicates the touch gesture is a scroll</td>
+<td>标识触摸手势是滑动事件</td>
+<td></td>
+</tr>
+<tr>
+<td>TOUCH_MODE_FLING</td>
+<td>Indicates the view is in the process of being flung</td>
+<td>标识当前View是在“甩”的过程中</td>
+<td></td>
+</tr>
+<tr>
+<td>TOUCH_MODE_OVERSCROLL</td>
+<td>Indicates the touch gesture is an overscroll - a scroll beyond the beginning or end.</td>
+<td>标识手势是一个越界滑动越界滑动是指滑动超出了内容区域的首尾</td>
+<td>这种状态下，AbsListView 会在 DOWN 事件时拦掉事件，交给自己的 onTouchEvent 处理，事件不会继续往子 View 传递</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_OVERFLING</td>
+<td>Indicates the view is being flung outside of normal content bounds and will spring back.</td>
+<td>标识当前View被“甩”出了正常滑动区域，即将会弹回来</td>
+<td>这种状态下，AbsListView 会在 DOWN 事件时拦掉事件，交给自己的 onTouchEvent 处理，事件不会继续往子 View 传递</td>
+</tr>
+</tbody>
+</table>
+<p>ListView 滑动模式有这么多，其实都是基于控件自身设计和交互上的考虑。我们会发现上表中出现的滑动模式，前四个模式，标识 ListView 当前处于的状态，并没有”滑“起来，而后四个模式，却在实际中有对应的场景：</p>
+<ul>
+<li><code>TOUCH_MODE_SCROLL</code>：最简单的场景，对应于 ListView 跟随我们的手指上下滑动</li>
+<li><code>TOUCH_MODE_FLING</code>：列表太长时，我们想要快速浏览，手指快速向下（上）滑动，手机离开屏幕伴有一定的加速度</li>
+<li><code>TOUCH_MODE_OVERSCROLL</code>：手机滑动列表已经超出内容的可滑动区域后，还继续滑动，表示 ListView 没有更多的内容了</li>
+<li><code>TOUCH_MODE_OVERFLING</code>：Fling 之后，滑动还没停下来的时候超出内容的滑动区域，继续滑动的状态，原生默认的效果是波纹动画，也是标示 ListView 没有更多可以滑动的内容了</li>
+<li><code>FAST_SCROLL</code>：除了以上的模式之外，还有一个模式 ，对应的场景是，我们拖动滑动标识器（scroll thumb）快速定位到 ListView 的某个位置，FAST_SCROLL 模式的事件处理在整个以上模式的最前边，是独立于这些模式的，我们后边单独分析</li>
+</ul>
+<p>以上就是我们这次要讲得 5 种滑动模式</p>
+<p>这里有个模式变化表，仅供参考，单次滑动屏幕，（中间不抬手指）</p>
+<table>
+<thead>
+<tr>
+<th>模式变化</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_OVERSCROLL</td>
+<td>（不可能，无法直接从 DOWN-&gt;OVERSCROLL，因为 mScrollY 必须经过 onOverScrolled 之后才能有值）</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; 按下，长按，TAP</td>
+<td>普通点击，长按</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_REST</td>
+<td>普通的滑动模式</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_OVERSCROLL-&gt; TOUCH_MODE_OVERFLING -&gt; TOUCH_MODE_FLING -&gt; TOUCH_MODE_REST</td>
+<td>初始化 -&gt; 触摸屏幕 -&gt; 接触滑动 -&gt; 越界 -&gt; 越界FLING -&gt; FLING -&gt; 重置</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_OVERSCROLL -&gt; TOUCH_MODE_REST</td>
+<td>初始化 -&gt; 触摸屏幕 -&gt; 接触滑动 -&gt; 越界 -&gt; 松手 -&gt; 弹回重置</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_OVERSCROLL -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_REST</td>
+<td>初始化 -&gt; 触摸屏幕 -&gt; 接触滑动 -&gt; 越界 -&gt; 往回滑动 -&gt; 松手</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_FLING</td>
+<td>（不可能，无法直接从 DOWN-&gt;FLING，因为 fling 需要加速度，必须要经过 move）</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_FLING -&gt; TOUCH_MODE_OVERFLING -&gt; TOUCH_MODE_REST</td>
+<td>初始化 -&gt; 触摸屏幕 -&gt; 接触滑动 -&gt; 松手FLING -&gt; 越界FLING  -&gt; 停止</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_FLING -&gt; TOUCH_MODE_OVERFLING -&gt; TOUCH_MODE_FLING -&gt; TOUCH_MODE_REST</td>
+<td>初始化 -&gt; 触摸屏幕 -&gt; 接触滑动 -&gt; 松手FLING -&gt; 越界FLING -&gt; FLING -&gt; 停止</td>
+</tr>
+<tr>
+<td>TOUCH_MODE_REST -&gt; TOUCH_MODE_DOWN -&gt; TOUCH_MODE_SCROLL -&gt; TOUCH_MODE_FLING -&gt; TOUCH_MODE_REST</td>
+<td>初始化 -&gt; 触摸屏幕 -&gt; 接触滑动 -&gt; FLING -&gt; 到达边缘（当前 overScrollMode 被禁用）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="从哪里开始"><a href="#从哪里开始" class="headerlink" title="从哪里开始"></a>从哪里开始</h2><p>滑动是与用户连接非常密切的交互方式，而感知用户屏幕行为最重要的一个途径就是 MotionEvent 事件，所以要了解 ListView 的滑动模式，我们首先就需要把目光放到 ListView 处理屏幕触摸事件的两个方法</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">android.widget.AbsListView#onInterceptTouchEvent()</span><br><span class="line">android.widget.AbsListView#onTouchEvent()</span><br></pre></td></tr></table></figure>
+<p>ListView 继承自 ViewGroup，所以事件分发的过程会经历以下三个方法（并不是每次事件流都必走，顺序也不是从上到下的）</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">android.view.ViewGroup#dispatchTouchEvent()</span><br><span class="line">android.widget.AbsListView#onInterceptTouchEvent()</span><br><span class="line">android.widget.AbsListView#onTouchEvent()</span><br></pre></td></tr></table></figure>
+<p>dispatchTouchEvent() 是 ViewGroup 专属，负责把控整个 View 树的整体事件分发，我们不再细说，具体可以看之前的一篇文章 <a href="https://0xfree.top/2018/01/09/android-touch-event-dispatch/" target="_blank" rel="noopener">触摸事件分析</a></p>
+<p>触屏事件从底层传上来之后，会先经过父控件的 onInterceptTouchEvent() 方法，让父控件判断是否要拦截事件自用，要拦截的滑交给父控件自身的 onTouchEvent()，不拦截，那就向下传递，我们以这个为基本原则，详细来看</p>
+<h3 id="onInterceptTouchEvent"><a href="#onInterceptTouchEvent" class="headerlink" title="onInterceptTouchEvent"></a><strong>onInterceptTouchEvent</strong></h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onInterceptTouchEvent</span><span class="params">(MotionEvent ev)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> actionMasked = ev.getActionMasked();</span><br><span class="line">    View v;</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mFastScroll != <span class="keyword">null</span> &amp;&amp; mFastScroll.onInterceptTouchEvent(ev)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (actionMasked) &#123;</span><br><span class="line">    <span class="keyword">case</span> MotionEvent.ACTION_DOWN: &#123;</span><br><span class="line">        <span class="keyword">int</span> touchMode = mTouchMode;</span><br><span class="line">        <span class="keyword">if</span> (touchMode == TOUCH_MODE_OVERFLING || touchMode == TOUCH_MODE_OVERSCROLL) &#123; <span class="comment">// 如果在 overfling 或者 overScroll 中，那么直接拦截事件，交给自己的 onTouchEvent 处理</span></span><br><span class="line">            mMotionCorrection = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        mLastY = Integer.MIN_VALUE;</span><br><span class="line">        initOrResetVelocityTracker();</span><br><span class="line">        mVelocityTracker.addMovement(ev); <span class="comment">//加速度追踪者</span></span><br><span class="line"></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (touchMode == TOUCH_MODE_FLING) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> MotionEvent.ACTION_MOVE: &#123;</span><br><span class="line">        <span class="keyword">switch</span> (mTouchMode) &#123;</span><br><span class="line">        <span class="keyword">case</span> TOUCH_MODE_DOWN:</span><br><span class="line"></span><br><span class="line">            ......</span><br><span class="line"></span><br><span class="line">            <span class="keyword">final</span> <span class="keyword">int</span> y = (<span class="keyword">int</span>) ev.getY(pointerIndex);</span><br><span class="line">            initVelocityTrackerIfNotExists();</span><br><span class="line">            mVelocityTracker.addMovement(ev);</span><br><span class="line">            <span class="keyword">if</span> (startScrollIfNeeded((<span class="keyword">int</span>) ev.getX(pointerIndex), y, <span class="keyword">null</span>)) &#123; <span class="comment">// 是否要开始 overScrollBy 的滑动</span></span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> MotionEvent.ACTION_CANCEL:</span><br><span class="line">    <span class="keyword">case</span> MotionEvent.ACTION_UP: &#123;</span><br><span class="line">        mTouchMode = TOUCH_MODE_REST;</span><br><span class="line">        mActivePointerId = INVALID_POINTER;</span><br><span class="line">        recycleVelocityTracker();</span><br><span class="line"></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> MotionEvent.ACTION_POINTER_UP: &#123;</span><br><span class="line"></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>快速滑动的判定更早于其他模式，在 onInterceptTouchEvent() 一开始就处理过了，具体细节我们后续再说</p>
+<p>在 ACTION_DOWN 中，OVERFLING，OVERFLING，OVERFLING 这三种情况下，会将接下来的事件直接转交给 ListView 自身，而其他情况下，对是否抵达这三种情况的判定其实是在 ACTION_MOVE 中，也就是说 ListView 并没有在事件一开始就接管，而是通过一段时间的滑动之后才做出了进入滑动模式的判定，从而基于这个判定来接管后续的事件</p>
+<p>从 ACTION_DOWN 的代码中，我们可以总结两点：</p>
+<ol>
+<li><p>在已经进入 OVERFLING，OVERFLING，OVERFLING 三个模式后，后续发生的事件流，都会先被 ListView 自身所接管处理，也就是说在 ListView 还在滑动的过程中的时候，轻点一下屏幕，并不会触发子 View 的点击事件，而是 ListView 自己去处理，这个并不难理解，触发滚动之后，后续的第一个事件自然应该是先停止滚动，然后在静止的情况下让用户准确的选中要处理的子 Item</p>
+</li>
+<li><p>在将要触发滑动的第一个事件流来的时候，ListView 并没有立刻接管这个事件流，而是“观察”了一段 ACTION_MOVE 事件之后，才开始接管，所以对于进入滑动的时机，是在 ACTION_MOVE 中判定的。</p>
+</li>
+</ol>
+<blockquote>
+<p>每组事件的开头 ACTION_DOWN 被父控件拦截之后，这个事件流的后续事件都会被父控件接管吗？子控件还有机会获得使用吗？<br>答：有机会，调用 requestDisallowInterceptTouchEvent() 就可以，但是因为 touch 事件已经被父 View 接管了，所以在触屏事件流的过程中，是没有机会的，只能通过其他时机触发</p>
+</blockquote>
+<h3 id="onTouchEvent"><a href="#onTouchEvent" class="headerlink" title="onTouchEvent"></a>onTouchEvent</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent ev)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mFastScroll != <span class="keyword">null</span> &amp;&amp; mFastScroll.onTouchEvent(ev)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    initVelocityTrackerIfNotExists();</span><br><span class="line">    <span class="keyword">final</span> MotionEvent vtev = MotionEvent.obtain(ev);</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> actionMasked = ev.getActionMasked();</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (actionMasked) &#123;</span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_DOWN: &#123;</span><br><span class="line">            onTouchDown(ev);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_MOVE: &#123;</span><br><span class="line">            onTouchMove(ev, vtev);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_UP: &#123;</span><br><span class="line">            onTouchUp(ev);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_CANCEL: &#123;</span><br><span class="line">            onTouchCancel();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mVelocityTracker != <span class="keyword">null</span>) &#123;</span><br><span class="line">        mVelocityTracker.addMovement(vtev);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    vtev.recycle();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>好了，定位到滑动的入口，接下来我们就简单介绍下这几个滑动模式的整体流程<br>事件首先会到达 <code>android.widget.AbsListView#onInterceptTouchEvent</code>，我们先看拦截的机制</p>
+<ol>
+<li>手指放到屏幕上，ACTION_DOWN ，mTouchMode 被初始化为 TOUCH_MODE_REST，标志着 touchMode 的重新计算，并重置了上次滑动的位置 mLastY</li>
+<li><p>手指开始移动，ACTION_MOVE 事件到达，这里会时刻监控 startScrollIfNeeded() 的返回值，来决定要不要拦截事件，转交给自身的 onTouchEvent() 处理，</p>
+<p> 拦截的触发条件有两个：</p>
+<ul>
+<li>是否超出 View 的边缘（mScrollY !=0），超过表示 overScroll() 模式</li>
+<li>有没有超过 android 设定的误触值 mTouchSlop，超过并且不是 overScoll 模式，那么就是滑动模式 scroll 了，如果判定了滑动模式，要清除一些子 Item 的按下状态，还要阻止父控件拦截事件，全部交给自己来处理了（有点霸道。。），最后就根据滑动的值来改变 ListView 自身的状态了</li>
+</ul>
+</li>
+<li><p>我们假定，已经触发了滑动或者越界滑动的条件，实际滚动的过程需要区分这二者</p>
+</li>
+</ol>
+<blockquote>
+<p>所谓的超过 View 的边缘是什么意思？<br>答：View 的滚动可以分为两个部分，一个是内容的滚动，一个是 View 自身的滚动，ListView 中 item 的滚动就是属于内容的滚动，而越界的滚动属于 ListView 自身的滚动。</p>
+</blockquote>
+<p>进入各个模式之前，我们需要明确一点，ListView 在每次滑动的时候，都会记录手指按下时候的位置 mMotionY，手指从上次按下位置开始到当前点滑动的距离 deltaY，以及手指自上次之后滑动的距离 incrementalDeltaY，以及当前 View 所滑动的距离 mScrollY（整个 View 滑动的距离，而不是 View 的内容）</p>
+<p>这四个变量会在下边的四个滑动模式中被反复使用。</p>
+<h2 id="5种模式"><a href="#5种模式" class="headerlink" title="5种模式"></a>5种模式</h2><h3 id="SCROLL"><a href="#SCROLL" class="headerlink" title="SCROLL"></a>SCROLL</h3><p><a href="https://imgchr.com/i/exPXLt" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/08/11/exPXLt.md.png" alt="exPXLt.md.png"></a></p>
+<p>滑动模式我们需要让 ListView 的内容滚动起来，这里 Android 是在 trackMotionScroll() 中处理的，这个处理的过程区分是否到达 ListView 的开头和末尾，如果满足条件的话，那么马上就要切换到越界滚动模式，反之，就要保证让 ListView 的内容滚动起来，因为 ListView 有 View 复用的逻辑，所以在旧的 View 滑出屏幕之后要加入回收池，新的 View 进入屏幕时要立刻绑定数据或者重新创建，<br>子 item 的滚动是通过对每个 item 使用 offsetChildrenTopAndBottom() 来实现的，这个函数之后会调用 invalidate() 来刷新 ListView 内容</p>
+<p>那么问题又来了，屏幕滚动，一部分子 item 向上（下）滚动，那么 ListView 空出来的地方怎么把新的 View 填充上去，答案是 fillGap()，这个函数会根据向上还是向下滚动，来决定 fillUp() 还是 fillDown()，这里会根据一定的条件决定新建还是复用子 Item，如果是创建的话，还需要使用 setupChild() 初始化这个新的子 Item，来将 item 放到合适的位置上</p>
+<p>SCROLL 模式的滑动模型是手指移动的距离就是 ListView 内容滚动的区域，所以在进入滑动模式之后，手指每次移动的距离 incrementalDeltaY 就是本次 listView 需要“消费”的距离，消费完成，ListView 就停止滚动</p>
+<h3 id="OVERSCOLL"><a href="#OVERSCOLL" class="headerlink" title="OVERSCOLL"></a>OVERSCOLL</h3><p><a href="https://imgchr.com/i/exPveP" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/08/11/exPveP.md.jpg" alt="exPveP.md.jpg"></a></p>
+<p>越界滚动是在 ListView 滑动子 Item 到达顶部或者底部的时候触发，在之前的滚动模式中我们在判定 ListView 到达上下边缘时就看到了触发的条件，我们接着上边的分支看  </p>
+<p>判定满足了越界滚动模式的条件，那么就会通过 overScrollBy() 来梳理计算出越界滚动的一些数据（注意，这个 overScrollBy() 是 View 的能力），将数据通过交给使用者自己处理，我们可以在 onOverScrolled() 中拿到这些数据决定如何处理，ListView 这里只是设定了 mScrollY 的值，并通过回调通知使用者越界的具体参数，如果想实现弹性效果，就可以在复写 onOverScrolled() 来处理</p>
+<p>这里插一句闲话，据说在 IOS 出现越界弹性效果之后，Android 也跟进了提供 onOverScrolled() 方式，但是却没有提供具体实现，可能是因为担心承担法律责任</p>
+<p>最后，Android 默认会根据设定的 overScrollMode 来决定如何提示滚动越界了，android5.0 之后的越界会有波纹效果，就是从这里显示出来的，这里通过一个 EdgeEffect 的类来处理越界滚动的效果</p>
+<p>至于 overScroll 模式如何停下来，我们在 fling 模式的后边细说，因为 overScroll 模式和 fling 模式的停止都使用了动画。</p>
+<blockquote>
+<p>什么是未被消费的滚动距离<br>答：我们手指离开屏幕之后的加速度所计算得出的距离就是总的滚动距离，后续 View 自动滚动需要消费这些距离，直到消费完成</p>
+</blockquote>
+<h4 id="overScrollMode"><a href="#overScrollMode" class="headerlink" title="overScrollMode"></a>overScrollMode</h4><p>先说明一下，overScroll 也有三种模式，用户可以设置的模式，根据这三种模式，越界滚动的效果也不一样<br>|scrollMode|注释|解析|备注|<br>|–|–|–|–|<br>|OVER_SCROLL_ALWAYS|Always allow a user to over-scroll this view, provided it is a  view that can scroll.|总是允许越界滚动||<br>|OVER_SCROLL_IF_CONTENT_SCROLLS|Allow a user to over-scroll this view only if the content is large enough to meaningfully scroll, provided it is a view that can scroll.|只有在内容足够大时，来清晰的表示滑动状态时，才允许滑动||<br>|OVER_SCROLL_NEVER|Never allow a user to over-scroll this view.|总是禁止||</p>
+<p>看到这里不要忘记我们是在 onInterceptTouchEvent() 方法中，事件在这里拦截后，会转交给 onTouchEvent() 处理</p>
+<p>所以在上文3的触发条件满足之后，我们后续的事件要接受 onTouchEvent() 的进一步处理<br>从我们在上边的分析中，在 ListView 从静止到触发滑动之前，事件并没有被 ListView 拦截掉，那么这些事件会被派发给子 Item，这时候子 Item 可以根据这个 Down 事件来处理按下的状态，</p>
+<blockquote>
+<p>如果子 Item 这个时候在自己的事件处理中返回 true，接管了这个事件流的后续，那么后边是什么样的流程了？<br>答：那么事件将会直接交给子 item 处理，这个事件流周期内，ListView 自身是无法再接受到事件。</p>
+</blockquote>
+<p>如果子 item 没有拦截这个事件，那么 listView 会在 onTouchDown() 中简单处理一下状态，并发送延迟消息来判定是否要触发长按事件。<br>我们接着来看滑动事件触发之后，事件会交给 ListView 自身处理，这时候 MOVE 事件会在 onTouchMove() 中处理，同样，这里也使用 scrollIfNeed() 来处理滚动和越界滚动的效果</p>
+<blockquote>
+<p>这里为啥要多加一层，在onInterceptTouchEvent 中处理的不够吗？<br>答：因为 intercept 只是起到第一次拦截的作用，intercept 拦截之后，后续事件不会再次经过 intercept，只会直接交给 touchEvent，所以这里需要继续后边滑动的处理</p>
+</blockquote>
+<h3 id="FLING-amp-OVER-FLING"><a href="#FLING-amp-OVER-FLING" class="headerlink" title="FLING &amp; OVER_FLING"></a>FLING &amp; OVER_FLING</h3><p><a href="https://imgchr.com/i/exPxdf" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/08/11/exPxdf.md.jpg" alt="exPxdf.md.jpg"></a></p>
+<p>在 ACTION_DOWN 和 ACTION_MOVE 方法处理中这两种模式并没有什么不同，不同之处在于松手之后，也就是 ACTION_UP 事件传过来，<br>ACTION_UP 事件传过来之后，我们会使用之前在 ACTION_DOWN 和 ACTION_MOVE 中监控的 velocityTracker 事件来分析手指离开屏幕的加速度，如果分析得到加速度大于 mMinimumVelocity ，那么会触发进入 TOUCH_MODE_FLING 模式，这个模式下的处理交给了 FlingRunnable，这个 Runnable 内置了一个 OverScroller 会按需处理 FLING，OverFling，SpringBack（回弹）这三种状态</p>
+<p>举例来说，在列表足够长时，Fling 一段距离之后会停下来，而列表短时，可能会触发 OverFling，然后再触发 SpringBack 效果，这里不再细谈，只需要知道 Fling 和 OverFling 是在这个 FlingRunnable 中处理就 OK，后续需要的时候再回头细看即可</p>
+<p>注：FlingRunnable 的运行模式<br>FlingRunnable 通过 postOnAnimation 把自身加入到 Choreographer 的回调队列中，在每次 VSYNC 事件的时候都会回调FlingRunnable 的 run 方法，在 run 方法中决定是否要继续监听下一次 Choreographer 的回调，来实现持续滑动的效果</p>
+<p>VSYNC 相关内容可以参考以下文章：<br><a href="https://0xfree.top/2018/06/02/why-it-is-vsync/" target="_blank" rel="noopener">为什么是VSYNC</a></p>
+<p>Choreographer 可以参考以下文章：<br><a href="https://0xfree.top/2018/10/12/trilogy-of-invalidate/" target="_blank" rel="noopener">invalidate 三部曲序</a><br><a href="https://0xfree.top/2018/10/13/invalidate-of-invalidate/" target="_blank" rel="noopener">invalidate 三部曲之始于 invalidate</a><br><a href="https://0xfree.top/2018/12/18/invalidate-of-choreographer/" target="_blank" rel="noopener">invalidate 三部曲之历经 Choreographer</a>  </p>
+<h3 id="FAST-SCROLL"><a href="#FAST-SCROLL" class="headerlink" title="FAST_SCROLL"></a>FAST_SCROLL</h3><p>说完 scroll，overScrol，fling，overFling，这四种模式之后，我们最后看一下 fastScroll 的一些内容<br>顾名思义，fastScroll，快速滚动，这个滚动不是通过滑动 listView 的内容区域来触发的，而是通过 fast scroll thumb 这个控件来触发的，事件处理也是独立于 ListView 的，单独放到了 FastScroller 中处理，我们可以通过设置来开关这个属性，很多人应该都用过，拖动 scrollbar，然后下拉，就可以达到这种效果</p>
+<p>因为这个事件是在一个单独的控件中触发的，所以事件处理也是完全独立 ListView 的，感兴趣的翻看 FastScroller 代码</p>
+<p>至此，我们对 ListView 的5个滑动模式就分析到这里，理清楚了大部分的流程之后，我们遇到 ListView 相关的问题，就可以迅速从某个入口介入。</p>
+
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://www.0xfree.top">0xfree</a>
+            <p>原文链接：<a href="http://www.0xfree.top/2019/08/12/listview-scrollmode-parse/">http://www.0xfree.top/2019/08/12/listview-scrollmode-parse/</a>
+            <p>发表日期：<a href="http://www.0xfree.top/2019/08/12/listview-scrollmode-parse/">August 12th 2019, 12:08:24 am</a>
+            <p>更新日期：<a href="http://www.0xfree.top/2019/08/12/listview-scrollmode-parse/">March 7th 2020, 12:51:41 am</a>
+            <p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href= "/2019/07/01/android-measurespec-layoutparams/" title= "MeasureSpec 与 LayoutParams 不得不说的二三事">
+                    <div class="prevTitle">MeasureSpec 与 LayoutParams 不得不说的二三事</div>
+                </a>
+            
+        </li>
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href= "/2019/08/31/git_and_gerrit/" title= "Git 与 Gerrit">
+                    <div class="nextTitle">Git 与 Gerrit</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    
+    <!-- partial('_partial/comment/changyan') -->
+    <!--PC版-->
+
+
+    
+    
+    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <div id="comment"></div>
+    <script>
+    new Valine({
+        el: '#comment' ,
+        notify:false, 
+        verify:false, 
+        appId: "ntHALp5naE0BMs0bOxMw9jmN-gzGzoHsz",
+        appKey: "2Y1bCJ9hhKzMEjisEm2hIAME",
+        placeholder: "gogo",
+        path:window.location.pathname, 
+        avatar:'mm' 
+    });
+    </script>
+
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:daniel2008lee@163.com" class="iconfont-archer email" title=email ></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/lixiao123" class="iconfont-archer github" target="_blank" title=github></a>
+            
+        
+    
+        
+            
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/myself-low.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+            
+                <a href="https://www.zhihu.com/people/li-xiao-92-82/activities" class="iconfont-archer zhihu" target="_blank" title=zhihu></a>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#滑动模式基本介绍"><span class="toc-number">1.</span> <span class="toc-text">滑动模式基本介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从哪里开始"><span class="toc-number">2.</span> <span class="toc-text">从哪里开始</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#onInterceptTouchEvent"><span class="toc-number">2.1.</span> <span class="toc-text">onInterceptTouchEvent</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#onTouchEvent"><span class="toc-number">2.2.</span> <span class="toc-text">onTouchEvent</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5种模式"><span class="toc-number">3.</span> <span class="toc-text">5种模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SCROLL"><span class="toc-number">3.1.</span> <span class="toc-text">SCROLL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OVERSCOLL"><span class="toc-number">3.2.</span> <span class="toc-text">OVERSCOLL</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#overScrollMode"><span class="toc-number">3.2.1.</span> <span class="toc-text">overScrollMode</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FLING-amp-OVER-FLING"><span class="toc-number">3.3.</span> <span class="toc-text">FLING &amp; OVER_FLING</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FAST-SCROLL"><span class="toc-number">3.4.</span> <span class="toc-text">FAST_SCROLL</span></a></li></ol></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 25
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2020 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/07</span><a class="archive-post-title" href= "/2020/06/07/how-to-reproguard-by-mapping/" >如何通过 Mapping 文件反混淆</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/11</span><a class="archive-post-title" href= "/2019/11/11/android-jsbridge/" >一篇写给 Android 刚入门小伙伴的 JSBridge 文章</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/31</span><a class="archive-post-title" href= "/2019/08/31/git_and_gerrit/" >Git 与 Gerrit</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/12</span><a class="archive-post-title" href= "/2019/08/12/listview-scrollmode-parse/" >你要知道的 ListView 5种滑动模式全在这里了</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/01</span><a class="archive-post-title" href= "/2019/07/01/android-measurespec-layoutparams/" >MeasureSpec 与 LayoutParams 不得不说的二三事</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/03</span><a class="archive-post-title" href= "/2019/05/03/glide-contents/" >glide-contents</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/22</span><a class="archive-post-title" href= "/2019/04/22/how-to-build-android-source-code/" >从零开始搭建Android源码调试环境</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2018 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/18</span><a class="archive-post-title" href= "/2018/12/18/invalidate-of-choreographer/" >invalidate 三部曲之历经 Choreographer</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/13</span><a class="archive-post-title" href= "/2018/10/13/invalidate-of-invalidate/" >invalidate 三部曲之始于 invalidate</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/12</span><a class="archive-post-title" href= "/2018/10/12/trilogy-of-invalidate/" >invalidate 三部曲序</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span><a class="archive-post-title" href= "/2018/06/02/why-it-is-vsync/" >为什么是VSYNC</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/09</span><a class="archive-post-title" href= "/2018/01/09/android-touch-event-dispatch/" >触摸事件分析</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2017 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/07</span><a class="archive-post-title" href= "/2017/08/07/android-powerui/" >低电量提醒</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/14</span><a class="archive-post-title" href= "/2017/04/14/android-quicksettings-wifi/" >快捷开关之无线网路</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/05</span><a class="archive-post-title" href= "/2017/03/05/android-quicksettings-mobiledata/" >快捷开关之移动数据</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2016 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/29</span><a class="archive-post-title" href= "/2016/03/29/android-build-system-parse-PRODUCT_PROPERTY_OVERRIDES/" >关于PRODUCT_PROPERTY_OVERRIDES属性的解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span><a class="archive-post-title" href= "/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/" >PRODUCT_COPY_FILES语法解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/08</span><a class="archive-post-title" href= "/2016/01/08/android-build-systemui-keypoint-third/" >Android编译系统分析之几个关键点（三）</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2015 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/28</span><a class="archive-post-title" href= "/2015/12/28/android-build-system-keypoint-second/" >Android编译系统分析之几个关键点（二）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/22</span><a class="archive-post-title" href= "/2015/12/22/android-build-system-keypoint-first/" >Android编译系统分析之几个关键点（一）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span><a class="archive-post-title" href= "/2015/12/08/android-build-system-make/" >Android编译系统分析之make分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span><a class="archive-post-title" href= "/2015/12/01/android-build-system-lunch/" >Android编译系统分析之lunch分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/25</span><a class="archive-post-title" href= "/2015/11/25/gentoo-local-overlay/" >【译】Gentoo Local Overlay</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/24</span><a class="archive-post-title" href= "/2015/11/24/gentoo-basic-guide-ebuilds/" >【译】如何书写 Gentoo Ebuilds 的基本规则</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/05</span><a class="archive-post-title" href= "/2015/11/05/android-build-system-envsetup/" >source build/envsetup.sh 做了什么？</a>
+        </li>
+    
+    </div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="lunch"><span class="iconfont-archer">&#xe606;</span>lunch</span>
+    
+        <span class="sidebar-tag-name" data-tags="android"><span class="iconfont-archer">&#xe606;</span>android</span>
+    
+        <span class="sidebar-tag-name" data-tags="compile"><span class="iconfont-archer">&#xe606;</span>compile</span>
+    
+        <span class="sidebar-tag-name" data-tags="envsetup"><span class="iconfont-archer">&#xe606;</span>envsetup</span>
+    
+        <span class="sidebar-tag-name" data-tags="build"><span class="iconfont-archer">&#xe606;</span>build</span>
+    
+        <span class="sidebar-tag-name" data-tags="makefile"><span class="iconfont-archer">&#xe606;</span>makefile</span>
+    
+        <span class="sidebar-tag-name" data-tags="make"><span class="iconfont-archer">&#xe606;</span>make</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_COPY_FILES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_COPY_FILES</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_PROPERTY_OVERRIDES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_PROPERTY_OVERRIDES</span>
+    
+        <span class="sidebar-tag-name" data-tags="jsbridge"><span class="iconfont-archer">&#xe606;</span>jsbridge</span>
+    
+        <span class="sidebar-tag-name" data-tags="html"><span class="iconfont-archer">&#xe606;</span>html</span>
+    
+        <span class="sidebar-tag-name" data-tags="view"><span class="iconfont-archer">&#xe606;</span>view</span>
+    
+        <span class="sidebar-tag-name" data-tags="measureSpec"><span class="iconfont-archer">&#xe606;</span>measureSpec</span>
+    
+        <span class="sidebar-tag-name" data-tags="layoutParams"><span class="iconfont-archer">&#xe606;</span>layoutParams</span>
+    
+        <span class="sidebar-tag-name" data-tags="PowerUI"><span class="iconfont-archer">&#xe606;</span>PowerUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="SystemUI"><span class="iconfont-archer">&#xe606;</span>SystemUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="quickSettings"><span class="iconfont-archer">&#xe606;</span>quickSettings</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifiTIle"><span class="iconfont-archer">&#xe606;</span>wifiTIle</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifi"><span class="iconfont-archer">&#xe606;</span>wifi</span>
+    
+        <span class="sidebar-tag-name" data-tags="touchevent"><span class="iconfont-archer">&#xe606;</span>touchevent</span>
+    
+        <span class="sidebar-tag-name" data-tags="gentoo"><span class="iconfont-archer">&#xe606;</span>gentoo</span>
+    
+        <span class="sidebar-tag-name" data-tags="ebuild"><span class="iconfont-archer">&#xe606;</span>ebuild</span>
+    
+        <span class="sidebar-tag-name" data-tags="linux"><span class="iconfont-archer">&#xe606;</span>linux</span>
+    
+        <span class="sidebar-tag-name" data-tags="overlay"><span class="iconfont-archer">&#xe606;</span>overlay</span>
+    
+        <span class="sidebar-tag-name" data-tags="local"><span class="iconfont-archer">&#xe606;</span>local</span>
+    
+        <span class="sidebar-tag-name" data-tags="Git"><span class="iconfont-archer">&#xe606;</span>Git</span>
+    
+        <span class="sidebar-tag-name" data-tags="Gerrit"><span class="iconfont-archer">&#xe606;</span>Gerrit</span>
+    
+        <span class="sidebar-tag-name" data-tags="ubuntu"><span class="iconfont-archer">&#xe606;</span>ubuntu</span>
+    
+        <span class="sidebar-tag-name" data-tags="invalidate"><span class="iconfont-archer">&#xe606;</span>invalidate</span>
+    
+        <span class="sidebar-tag-name" data-tags="listView"><span class="iconfont-archer">&#xe606;</span>listView</span>
+    
+        <span class="sidebar-tag-name" data-tags="scrollMode"><span class="iconfont-archer">&#xe606;</span>scrollMode</span>
+    
+        <span class="sidebar-tag-name" data-tags="performance"><span class="iconfont-archer">&#xe606;</span>performance</span>
+    
+        <span class="sidebar-tag-name" data-tags="vsync"><span class="iconfont-archer">&#xe606;</span>vsync</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br/>
+    1、请确保node版本大于6.2<br/>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br/>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br/>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+        <span class="sidebar-category-name" data-categories="Android编译系统解析"><span class="iconfont-archer">&#xe60a;</span>Android编译系统解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Android"><span class="iconfont-archer">&#xe60a;</span>Android</span>
+    
+        <span class="sidebar-category-name" data-categories="View解析"><span class="iconfont-archer">&#xe60a;</span>View解析</span>
+    
+        <span class="sidebar-category-name" data-categories="SystemUI解析"><span class="iconfont-archer">&#xe60a;</span>SystemUI解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Gentoo"><span class="iconfont-archer">&#xe60a;</span>Gentoo</span>
+    
+        <span class="sidebar-category-name" data-categories="效率工具"><span class="iconfont-archer">&#xe60a;</span>效率工具</span>
+    
+        <span class="sidebar-category-name" data-categories="Android性能调优"><span class="iconfont-archer">&#xe60a;</span>Android性能调优</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "0xfree"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script>
+    
+    <!-- baidu static -->
+    <script>
+      (function(){
+          var bp = document.createElement('script');
+          var curProtocol = window.location.protocol.split(':')[0];
+          if (curProtocol === 'https') {
+              bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+          }
+          else {
+              bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+          }
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(bp, s);
+      })();
+    </script>
+    </body>
+</html>

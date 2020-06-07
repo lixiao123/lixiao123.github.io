@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="0xfree">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="0xfree">
+    
+    <meta name="keywords" content="android,build-system,0xfree-blog">
+    
+    <meta name="description" content="Read The Fuck Code">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>0xfree&#39;s Blog</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/favicon.ico">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?7a3e0de2a2409ac715977a70cebe1750";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    
+    <!-- 谷歌统计  -->
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-131092737-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    
+</head>
+
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <a class="home-link" href=/>0xfree's Blog.</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+">
+    
+    <!-- 主页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+    </div>
+</div>
+
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main index-page">
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2020/06/07/how-to-reproguard-by-mapping/" >
+            
+                <span>如何通过 Mapping 文件反混淆</span>
+        </a>
+        <div class="abstract-content">
+            写在前边做过 Android 开发的应该或多或少都知道“混淆”这个技术点，它不仅可以帮助我们增加三方逆向的难度，还可以有效减少包体积，瘦身 APK
+其实这些能力都来自于 Proguard 这个程序，Proguard 能利用字典文件，在编译时将我们的类名，方法名，字段名都替换掉，最后生成一份非常反人类的编译产物。Proguard 在每次运行时都会创建一个 mapping.txt 文件，其中列出了经过混淆处理的类、方法和字段名称与原始名称的映射关系。此映射文件还包含用于将行号映射回原始源文件行号的信息
+这篇文章的目的就是要解析生成的 Mapping 文件
+正文Mapping 文件的来源与用途...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2020/06/07</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "compile">compile</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2019/11/11/android-jsbridge/" >
+            
+                <span>一篇写给 Android 刚入门小伙伴的 JSBridge 文章</span>
+        </a>
+        <div class="abstract-content">
+            
+复杂的程序都需要分层表达
+
+正文这篇文章写给那些经常在 JAVA 层 “扑腾”，几乎没有接触过 H5 相关技术的小伙伴。我会在文章中解释 JSBridge 是什么？JSBridge 的技术定位是什么？理清 JSBridge 出现是要解决什么问题，最后讲一下对于实现 JSBridge 的一些技术方案思考。
+整篇文章，不贴过多的代码，只讲清原理和设计思路，因为只有理解了思路，才能更加灵活的做方案取舍。
+
+注：这里的 H5 泛指前端，不仅仅是 HTML5 的含义。
+
+背景在一切开始之前，我们需要先搞明白 JSBridge 在客户端技术栈中所处的位置，有助于对 JSBrige 所能发挥的作用做...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2019/11/11</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "jsbridge">jsbridge</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "html">html</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2019/08/31/git_and_gerrit/" >
+            
+                <span>Git 与 Gerrit</span>
+        </a>
+        <div class="abstract-content">
+            为什么需要版本控制系统，我想点进这篇文章的读者应该都已经对这个问题了然于胸，所以不再废话。我们会从版本是控制系统的历史发展开始着眼，到分布式系统仓库的概念，以及从仓库之间的数据传输协议，到最后的仓库的权限控制系统 Gerrit 一一讲过，来理解这些系统的使用方式和设计理念。
+分布式 Git我们都听过 Git 是完全分布式的，那么所谓的分布式怎么理解呢？
+要理解 Git 的的分布式，就需要来看一下版本控制系统的发展历程，从发展中看事物产生的必然性
+本地版本控制系统在互联网还未出来或者还在萌芽的时候，版本控制系统大多以本地为主，因为没有太多协作的必要性，软件规模也不是很大，所以版本控制系统还...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2019/08/31</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Git">Git</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Gerrit">Gerrit</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2019/08/12/listview-scrollmode-parse/" >
+            
+                <span>你要知道的 ListView 5种滑动模式全在这里了</span>
+        </a>
+        <div class="abstract-content">
+            前段时间在使用 ListView 的过程中，需要对一个子 Item 优化横向 Bannar 的滑动体验，于是借此机会，深入了解了一下 ListView 滑动的一些知识，来探究一下，一个 View 滑动，究竟需要做哪些事情。
+滑动模式基本介绍ListView 的滑动模式使用变量 mTouchMode 来表示，分为以下几种模式：
+
+
+
+mTouchMode
+注释
+解析
+备注
+
+
+
+
+TOUCH_MODE_REST
+Indicates that we are not in the middle of a touch gesture
+标识当前未处于滑动手势中
+用于重置当前滑动状态
+
+
+TOUCH...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2019/08/12</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "listView">listView</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "scrollMode">scrollMode</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2019/07/01/android-measurespec-layoutparams/" >
+            
+                <span>MeasureSpec 与 LayoutParams 不得不说的二三事</span>
+        </a>
+        <div class="abstract-content">
+            
+MesureSpec，测量规格
+
+前言MeasureSpec 这个话题往大了说，关系到整个 Android 测量体系的设定，往小了说，只是一个封装了位运算的内部静态类而已。当然我们不会仅仅满足于后者，所以我们就借 MeasureSpec 来简单窥探一下 Android 的测量体系。
+正文MeasureSpec，Android 给出的解释是封装了从父视图传递给子视图的布局要求。
+
+A MeasureSpec encapsulates the layout requirements passed from parent to child.
+
+这句话其实已经讲得足够清晰了，但对于从未接触过 ...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2019/07/01</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "measureSpec">measureSpec</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "layoutParams">layoutParams</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2019/04/22/how-to-build-android-source-code/" >
+            
+                <span>从零开始搭建Android源码调试环境</span>
+        </a>
+        <div class="abstract-content">
+            写在开头最近在公司遇到的很多问题都是通过翻看 Android 源码来解决的，例如
+
+竖向 ListView 和内嵌的横向 RecyclerView 的滑动冲突事件处理
+弹框内嵌 ListView 之后，弹框定向高度的计算
+处理 TextView 换行之后的文本所剩余的空白区域仍然可以点击的问题
+……
+
+实际解决这些问题的过程中，单纯依靠看源码很难定位到问题，那么断点调试就成了最有效的方法。然而，在现实环境中，还面临着一个不可跨越的鸿沟，国内手机大多数都是基于 Android 源码进行了定制，这部分代码是不开源的，而我们日常调试都是基于 Android 的标准源码，那么，代码行数无法准确匹...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2019/04/22</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "compile">compile</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "ubuntu">ubuntu</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/12/18/invalidate-of-choreographer/" >
+            
+                <span>invalidate 三部曲之历经 Choreographer</span>
+        </a>
+        <div class="abstract-content">
+            Choreographyer 三部曲
+
+invalidate 三部曲序 
+invalidate 三部曲之始于 invalidate
+invalidate 三部曲之历经 Choreographer
+
+
+
+Choreographer，编舞者。
+
+12345678910111213void scheduleTraversals() &#123;	if (!mTraversalScheduled) &#123;		mTraversalScheduled = true;		mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBar...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/12/18</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "invalidate">invalidate</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/10/13/invalidate-of-invalidate/" >
+            
+                <span>invalidate 三部曲之始于 invalidate</span>
+        </a>
+        <div class="abstract-content">
+            Choreographyer 三部曲
+
+invalidate 三部曲序 
+invalidate 三部曲之始于 invalidate
+invalidate 三部曲之历经 Choreographer
+
+
+
+invalidate  - to make invalid.
+
+invalidate() 方法可谓是自定义View的常客，不管是自己覆写onDraw()方法还是触发动画效果，以及其他种种需要更新界面元素的情况，都只需要调用一句invalidate()，剩下的交给系统即可，可谓省时又省力如果说我们在一些简单的View中是可以这样直接使用而不加思索，那么当我们的view足够复杂时，在面对庞大的...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/10/13</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "invalidate">invalidate</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/10/12/trilogy-of-invalidate/" >
+            
+                <span>invalidate 三部曲序</span>
+        </a>
+        <div class="abstract-content">
+            由于整个invalidate()周期较长，继续深入会涉及屏幕刷新等底层知识，所以我们会分为三个部分来讲，分别为View发起绘制、系统处理绘制请求的逻辑、View执行真实绘制。  
+时序图
+
+以scheduleTraversals()为第一个分割点，以doFrame()为第二个分割点，对应时序图的序列分别为：
+
+View 发起绘制： 1 - 8
+系统处理绘制请求的逻辑： 9 - 20
+View 执行真实绘制： 21 - 41
+
+目录
+invalidate 三部曲序 
+invalidate 三部曲之始于 invalidate
+invalidate 三部曲之历经 Choreographer
+
+
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/10/12</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "invalidate">invalidate</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/06/02/why-it-is-vsync/" >
+            
+                <span>为什么是VSYNC</span>
+        </a>
+        <div class="abstract-content">
+            单缓冲区显示器刷新的频率决定了人肉眼可感受的流畅度，刷新频率太低会导致出现PPT效果，刷新频率太高又没有太高的必要，所以显示器一般的刷新频率为60Hz，人眼可感知的最低限度，即1秒刷新60帧，也就是显示器会1秒从显卡中读取66帧的数据显示到屏幕上，那么这些数据是从哪里来的呢？
+答案是CPU/GPU产生的，也就是CPU/GPU作为帧的生产者，显示器作为帧的消费者
+CPU/GPU除了要承载显示帧的绘制工作，还需要承担其他的任务，所以频率都要比显示器高很多。那么这就产生了一个问题，CPU/GPU和显示器的频率不一致，导致刷新不同步
+以上的描述，都是在单缓冲区的情况下，也就是CPU/GPU和显示...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/06/02</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "performance">performance</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "vsync">vsync</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    <!-- paginator  -->
+    
+    <nav class="page-nav">
+        <span class="page-number current">1</span><a class="page-number" href="/tags/android/page/2/">2</a><a class="page-number" href="/tags/android/page/3/">3</a><a class="extend next" rel="next" href="/tags/android/page/2/">NEXT &#62;</a>
+    </nav>
+    
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:daniel2008lee@163.com" class="iconfont-archer email" title=email ></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/lixiao123" class="iconfont-archer github" target="_blank" title=github></a>
+            
+        
+    
+        
+            
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/myself-low.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+            
+                <a href="https://www.zhihu.com/people/li-xiao-92-82/activities" class="iconfont-archer zhihu" target="_blank" title=zhihu></a>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 25
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2020 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/07</span><a class="archive-post-title" href= "/2020/06/07/how-to-reproguard-by-mapping/" >如何通过 Mapping 文件反混淆</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/11</span><a class="archive-post-title" href= "/2019/11/11/android-jsbridge/" >一篇写给 Android 刚入门小伙伴的 JSBridge 文章</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/31</span><a class="archive-post-title" href= "/2019/08/31/git_and_gerrit/" >Git 与 Gerrit</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/12</span><a class="archive-post-title" href= "/2019/08/12/listview-scrollmode-parse/" >你要知道的 ListView 5种滑动模式全在这里了</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/01</span><a class="archive-post-title" href= "/2019/07/01/android-measurespec-layoutparams/" >MeasureSpec 与 LayoutParams 不得不说的二三事</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/03</span><a class="archive-post-title" href= "/2019/05/03/glide-contents/" >glide-contents</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/22</span><a class="archive-post-title" href= "/2019/04/22/how-to-build-android-source-code/" >从零开始搭建Android源码调试环境</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2018 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/18</span><a class="archive-post-title" href= "/2018/12/18/invalidate-of-choreographer/" >invalidate 三部曲之历经 Choreographer</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/13</span><a class="archive-post-title" href= "/2018/10/13/invalidate-of-invalidate/" >invalidate 三部曲之始于 invalidate</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/12</span><a class="archive-post-title" href= "/2018/10/12/trilogy-of-invalidate/" >invalidate 三部曲序</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span><a class="archive-post-title" href= "/2018/06/02/why-it-is-vsync/" >为什么是VSYNC</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/09</span><a class="archive-post-title" href= "/2018/01/09/android-touch-event-dispatch/" >触摸事件分析</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2017 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/07</span><a class="archive-post-title" href= "/2017/08/07/android-powerui/" >低电量提醒</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/14</span><a class="archive-post-title" href= "/2017/04/14/android-quicksettings-wifi/" >快捷开关之无线网路</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/05</span><a class="archive-post-title" href= "/2017/03/05/android-quicksettings-mobiledata/" >快捷开关之移动数据</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2016 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/29</span><a class="archive-post-title" href= "/2016/03/29/android-build-system-parse-PRODUCT_PROPERTY_OVERRIDES/" >关于PRODUCT_PROPERTY_OVERRIDES属性的解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span><a class="archive-post-title" href= "/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/" >PRODUCT_COPY_FILES语法解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/08</span><a class="archive-post-title" href= "/2016/01/08/android-build-systemui-keypoint-third/" >Android编译系统分析之几个关键点（三）</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2015 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/28</span><a class="archive-post-title" href= "/2015/12/28/android-build-system-keypoint-second/" >Android编译系统分析之几个关键点（二）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/22</span><a class="archive-post-title" href= "/2015/12/22/android-build-system-keypoint-first/" >Android编译系统分析之几个关键点（一）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span><a class="archive-post-title" href= "/2015/12/08/android-build-system-make/" >Android编译系统分析之make分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span><a class="archive-post-title" href= "/2015/12/01/android-build-system-lunch/" >Android编译系统分析之lunch分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/25</span><a class="archive-post-title" href= "/2015/11/25/gentoo-local-overlay/" >【译】Gentoo Local Overlay</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/24</span><a class="archive-post-title" href= "/2015/11/24/gentoo-basic-guide-ebuilds/" >【译】如何书写 Gentoo Ebuilds 的基本规则</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/05</span><a class="archive-post-title" href= "/2015/11/05/android-build-system-envsetup/" >source build/envsetup.sh 做了什么？</a>
+        </li>
+    
+    </div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="lunch"><span class="iconfont-archer">&#xe606;</span>lunch</span>
+    
+        <span class="sidebar-tag-name" data-tags="android"><span class="iconfont-archer">&#xe606;</span>android</span>
+    
+        <span class="sidebar-tag-name" data-tags="compile"><span class="iconfont-archer">&#xe606;</span>compile</span>
+    
+        <span class="sidebar-tag-name" data-tags="envsetup"><span class="iconfont-archer">&#xe606;</span>envsetup</span>
+    
+        <span class="sidebar-tag-name" data-tags="build"><span class="iconfont-archer">&#xe606;</span>build</span>
+    
+        <span class="sidebar-tag-name" data-tags="makefile"><span class="iconfont-archer">&#xe606;</span>makefile</span>
+    
+        <span class="sidebar-tag-name" data-tags="make"><span class="iconfont-archer">&#xe606;</span>make</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_COPY_FILES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_COPY_FILES</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_PROPERTY_OVERRIDES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_PROPERTY_OVERRIDES</span>
+    
+        <span class="sidebar-tag-name" data-tags="jsbridge"><span class="iconfont-archer">&#xe606;</span>jsbridge</span>
+    
+        <span class="sidebar-tag-name" data-tags="html"><span class="iconfont-archer">&#xe606;</span>html</span>
+    
+        <span class="sidebar-tag-name" data-tags="view"><span class="iconfont-archer">&#xe606;</span>view</span>
+    
+        <span class="sidebar-tag-name" data-tags="measureSpec"><span class="iconfont-archer">&#xe606;</span>measureSpec</span>
+    
+        <span class="sidebar-tag-name" data-tags="layoutParams"><span class="iconfont-archer">&#xe606;</span>layoutParams</span>
+    
+        <span class="sidebar-tag-name" data-tags="PowerUI"><span class="iconfont-archer">&#xe606;</span>PowerUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="SystemUI"><span class="iconfont-archer">&#xe606;</span>SystemUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="quickSettings"><span class="iconfont-archer">&#xe606;</span>quickSettings</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifiTIle"><span class="iconfont-archer">&#xe606;</span>wifiTIle</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifi"><span class="iconfont-archer">&#xe606;</span>wifi</span>
+    
+        <span class="sidebar-tag-name" data-tags="touchevent"><span class="iconfont-archer">&#xe606;</span>touchevent</span>
+    
+        <span class="sidebar-tag-name" data-tags="gentoo"><span class="iconfont-archer">&#xe606;</span>gentoo</span>
+    
+        <span class="sidebar-tag-name" data-tags="ebuild"><span class="iconfont-archer">&#xe606;</span>ebuild</span>
+    
+        <span class="sidebar-tag-name" data-tags="linux"><span class="iconfont-archer">&#xe606;</span>linux</span>
+    
+        <span class="sidebar-tag-name" data-tags="overlay"><span class="iconfont-archer">&#xe606;</span>overlay</span>
+    
+        <span class="sidebar-tag-name" data-tags="local"><span class="iconfont-archer">&#xe606;</span>local</span>
+    
+        <span class="sidebar-tag-name" data-tags="Git"><span class="iconfont-archer">&#xe606;</span>Git</span>
+    
+        <span class="sidebar-tag-name" data-tags="Gerrit"><span class="iconfont-archer">&#xe606;</span>Gerrit</span>
+    
+        <span class="sidebar-tag-name" data-tags="ubuntu"><span class="iconfont-archer">&#xe606;</span>ubuntu</span>
+    
+        <span class="sidebar-tag-name" data-tags="invalidate"><span class="iconfont-archer">&#xe606;</span>invalidate</span>
+    
+        <span class="sidebar-tag-name" data-tags="listView"><span class="iconfont-archer">&#xe606;</span>listView</span>
+    
+        <span class="sidebar-tag-name" data-tags="scrollMode"><span class="iconfont-archer">&#xe606;</span>scrollMode</span>
+    
+        <span class="sidebar-tag-name" data-tags="performance"><span class="iconfont-archer">&#xe606;</span>performance</span>
+    
+        <span class="sidebar-tag-name" data-tags="vsync"><span class="iconfont-archer">&#xe606;</span>vsync</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br/>
+    1、请确保node版本大于6.2<br/>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br/>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br/>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+        <span class="sidebar-category-name" data-categories="Android编译系统解析"><span class="iconfont-archer">&#xe60a;</span>Android编译系统解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Android"><span class="iconfont-archer">&#xe60a;</span>Android</span>
+    
+        <span class="sidebar-category-name" data-categories="View解析"><span class="iconfont-archer">&#xe60a;</span>View解析</span>
+    
+        <span class="sidebar-category-name" data-categories="SystemUI解析"><span class="iconfont-archer">&#xe60a;</span>SystemUI解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Gentoo"><span class="iconfont-archer">&#xe60a;</span>Gentoo</span>
+    
+        <span class="sidebar-category-name" data-categories="效率工具"><span class="iconfont-archer">&#xe60a;</span>效率工具</span>
+    
+        <span class="sidebar-category-name" data-categories="Android性能调优"><span class="iconfont-archer">&#xe60a;</span>Android性能调优</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "0xfree"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+    <!-- baidu static -->
+    <script>
+      (function(){
+          var bp = document.createElement('script');
+          var curProtocol = window.location.protocol.split(':')[0];
+          if (curProtocol === 'https') {
+              bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+          }
+          else {
+              bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+          }
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(bp, s);
+      })();
+    </script>
+    </body>
+</html>

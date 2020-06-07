@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="0xfree">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="0xfree">
+    
+    <meta name="keywords" content="android,build-system,0xfree-blog">
+    
+    <meta name="description" content="Read The Fuck Code">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>快捷开关之无线网路 · 0xfree&#39;s Blog</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/favicon.ico">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?7a3e0de2a2409ac715977a70cebe1750";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    
+    <!-- 谷歌统计  -->
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-131092737-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >0xfree&#39;s Blog.</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">快捷开关之无线网路</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href=/>0xfree's Blog.</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+
+height:50vh;
+">
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(https://source.unsplash.com/1600x900/?code)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            快捷开关之无线网路
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "quickSettings">quickSettings</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "wifiTIle">wifiTIle</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "wifi">wifi</a>
+    
+</div>
+                
+                
+                    <div class="post-intro-read">
+                        <span>字数统计: <span class="post-count word-count">1.1k</span>阅读时长: <span class="post-count reading-time">4 min</span></span>
+                    </div>
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2017/04/14</span>
+                    <!-- 
+                    <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                        <span class="iconfont-archer">&#xe602;</span>
+                        <span id="busuanzi_value_page_pv"></span>
+                    </span>
+                     -->
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>无线网络作为快捷开关三大金刚之一，重要性不言而喻。为用户提供开关wifi以及切换wifi的功能。无线网络虽然只是作为一个入口，和设置中无线网络页面扮演着相同的角色，但是因为可随时访问的特性，会比设置无线网络有着更多的用户场景，实时性，交互性，稳定性都有着更高的要求。</p>
+<p><a href="https://imgchr.com/i/FeuPNF" target="_blank" rel="noopener"><img src="https://s1.ax1x.com/2018/11/29/FeuPNF.png" alt="FeuPNF.png"></a></p>
+<p>从以上的UML类图中我们初步分析一下无线网络开关相关的模块结构：</p>
+<ul>
+<li><p>从View的方面来说</p>
+<ul>
+<li>与所有的快捷开关一致，WifiTile是无线网络开关的View层，继承自QSTile（顶部3个方法为开关必须要实现的基本功能，其他方法根据需要可选择实现，比如有些开关没有长按功能就不需要实现<code>handleLongClick()</code>）</li>
+<li>除此之外还有下拉菜单功能，这部分是由接口DetailAdapter来规范的，如果要使用下拉菜单，需要自行实现以上接口，并在<strong>QSTile</strong>中的<code>getDetailAdapter()</code>方法中返回实例</li>
+</ul>
+</li>
+<li><p>从Controller的方面来说</p>
+<ul>
+<li>NetworkController，用于开关WIFI和获取WIFI的状态变化信息，是快捷开关的基本功能</li>
+<li>AccessPointController，用于发起扫描WIFI和获取扫描之后的WIFI列表，用于下拉菜单的展示</li>
+</ul>
+</li>
+</ul>
+<p>以上就是整个无线网络开关的模块相关结构了，重要的细节我们稍后讨论</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="开关无线网络"><a href="#开关无线网络" class="headerlink" title="开关无线网络"></a>开关无线网络</h2><h3 id="开关网络"><a href="#开关网络" class="headerlink" title="开关网络"></a>开关网络</h3><p>在点击开关或者点开下拉菜单的时候，会操作网络状态，Android提供了接口操作wifi开关，因为WIFI与移动热点相关连，所以这里加入了移动热点的相关判断</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// com.android.systemui.statusbar.policy.NetworkControllerImpl#setWifiEnabled</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setWifiEnabled</span><span class="params">(<span class="keyword">final</span> <span class="keyword">boolean</span> enabled)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> AsyncTask&lt;Void, Void, Void&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">protected</span> Void <span class="title">doInBackground</span><span class="params">(Void... args)</span> </span>&#123;</span><br><span class="line">                <span class="comment">// Disable tethering if enabling Wifi</span></span><br><span class="line">                <span class="keyword">final</span> <span class="keyword">int</span> wifiApState = mWifiManager.getWifiApState();</span><br><span class="line">                <span class="keyword">if</span>(DEBUG) Log.d(TAG, <span class="string">"doInBackground: enabled = "</span> + enabled + <span class="string">" wifiApState = "</span> + wifiApState);</span><br><span class="line">                <span class="keyword">if</span> (enabled &amp;&amp; ((wifiApState == WifiManager.WIFI_AP_STATE_ENABLING) ||</span><br><span class="line">                        (wifiApState == WifiManager.WIFI_AP_STATE_ENABLED))) &#123;</span><br><span class="line">                    mWifiManager.setWifiApEnabled(<span class="keyword">null</span>, <span class="keyword">false</span>);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                mWifiManager.setWifiEnabled(enabled);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;.execute();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="响应状态"><a href="#响应状态" class="headerlink" title="响应状态"></a>响应状态</h3><p>wifi的状态响应是通过SignalCallback回调传过来的数据响应，而这个回调在NetworkController的实现类中统一通过广播处理，这个实现类除了处理wifi的信号和状态变化，还会处理移动数据的状态变化，用于更新状态栏信号，通知栏头部的运营商名称等信息，这个模块的结构我们在另一篇文章中（TODO）解析，这里我们只需要知晓状态响应的来源位置就好</p>
+<p>开关的状态会通过<code>handleUpdateState()</code>方法更新，然后交由父类统一处理，这块逻辑我们会在另一篇文章中（TODO）解析，这里我们只需要在<code>handleUpdateState()</code>中更新正确的状态即可</p>
+<h2 id="切换无线网络"><a href="#切换无线网络" class="headerlink" title="切换无线网络"></a>切换无线网络</h2><p>无线网络的切换操作方式是点击开关下拉菜单，然后点击需要切换的网络，展示是在WifiTile这个View中，而数据来源是<code>AccessPointController</code>，对应的实现类<code>AccessPointControllerImpl</code>。</p>
+<h3 id="切换网络"><a href="#切换网络" class="headerlink" title="切换网络"></a>切换网络</h3><p>通过以下方法切换：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">connect</span><span class="params">(AccessPoint ap)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (ap == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">if</span> (ap.isFreeWifi()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (WifiUtils.isFreeWifiOnceConnected(mContext)) &#123;</span><br><span class="line">                mWifiTracker.connect(ap);</span><br><span class="line">            &#125;</span><br><span class="line">            Log.d(TAG, <span class="string">"connect: free wifi ssid = "</span> + ap.getSsidStr() + <span class="string">" bssid = "</span> + ap.getBssid());</span><br><span class="line">            Intent intent = <span class="keyword">new</span> Intent(MZ_ACTION_FREE_WIFI_ACTIVITY);</span><br><span class="line">            Bundle args = ap.getFreeWifiApInfo().getBundle(ap);</span><br><span class="line">            intent.putExtra(EXTRA_FREE_WIFI_BUNDLE, args);</span><br><span class="line">            fireSettingsIntentCallback(intent);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (ap.isSaved()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (DEBUG) Log.d(TAG, <span class="string">"connect networkId="</span> + ap.getConfig().networkId);</span><br><span class="line">            mWifiTracker.getManager().connect(ap.getConfig().networkId, mConnectListener);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// Unknown network, need to add it.</span></span><br><span class="line">            <span class="keyword">if</span> (ap.getSecurity() != AccessPoint.SECURITY_NONE) &#123;</span><br><span class="line">                Intent intent = <span class="keyword">new</span> Intent(<span class="comment">/*Settings.ACTION_WIFI_SETTINGS*/</span>MZ_ACTION_PICK_WIFI_NETWORK);</span><br><span class="line">                intent.putExtra(EXTRA_START_CONNECT_SSID, ap.getSsidStr());</span><br><span class="line">                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">                fireSettingsIntentCallback(intent);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                ap.generateOpenNetworkConfig();</span><br><span class="line">                mWifiTracker.getManager().connect(ap.getConfig(), mConnectListener);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>需要注意的是：</p>
+<ul>
+<li>对于已经保存的网络或者开放网络，可以直接通过<code>android.net.wifi.WifiManager#connect(android.net.wifi.WifiConfiguration, android.net.wifi.WifiManager.ActionListener)</code>连接</li>
+<li>而对于免费WIFI和加密WIFI，需要跳转到设置页面进行相应的处理，免费wifi需要设置认证，而加密wifi需要在设置输入密码</li>
+</ul>
+<h3 id="响应刷新"><a href="#响应刷新" class="headerlink" title="响应刷新"></a>响应刷新</h3><p>状态响应比较简单，<code>SettingsLib</code>会通过WifiListening这个接口来通知下拉菜单的wifi热点的变化，另外这个回调会在下拉菜单展开时注册，收起时取消注册</p>
+
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://www.0xfree.top">0xfree</a>
+            <p>原文链接：<a href="http://www.0xfree.top/2017/04/14/android-quicksettings-wifi/">http://www.0xfree.top/2017/04/14/android-quicksettings-wifi/</a>
+            <p>发表日期：<a href="http://www.0xfree.top/2017/04/14/android-quicksettings-wifi/">April 14th 2017, 8:54:17 pm</a>
+            <p>更新日期：<a href="http://www.0xfree.top/2017/04/14/android-quicksettings-wifi/">April 20th 2017, 10:32:58 pm</a>
+            <p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href= "/2017/03/05/android-quicksettings-mobiledata/" title= "快捷开关之移动数据">
+                    <div class="prevTitle">快捷开关之移动数据</div>
+                </a>
+            
+        </li>
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href= "/2017/08/07/android-powerui/" title= "低电量提醒">
+                    <div class="nextTitle">低电量提醒</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    
+    <!-- partial('_partial/comment/changyan') -->
+    <!--PC版-->
+
+
+    
+    
+    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <div id="comment"></div>
+    <script>
+    new Valine({
+        el: '#comment' ,
+        notify:false, 
+        verify:false, 
+        appId: "ntHALp5naE0BMs0bOxMw9jmN-gzGzoHsz",
+        appKey: "2Y1bCJ9hhKzMEjisEm2hIAME",
+        placeholder: "gogo",
+        path:window.location.pathname, 
+        avatar:'mm' 
+    });
+    </script>
+
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:daniel2008lee@163.com" class="iconfont-archer email" title=email ></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/lixiao123" class="iconfont-archer github" target="_blank" title=github></a>
+            
+        
+    
+        
+            
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/myself-low.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+            
+                <a href="https://www.zhihu.com/people/li-xiao-92-82/activities" class="iconfont-archer zhihu" target="_blank" title=zhihu></a>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#正文"><span class="toc-number">2.</span> <span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#开关无线网络"><span class="toc-number">2.1.</span> <span class="toc-text">开关无线网络</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#开关网络"><span class="toc-number">2.1.1.</span> <span class="toc-text">开关网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#响应状态"><span class="toc-number">2.1.2.</span> <span class="toc-text">响应状态</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#切换无线网络"><span class="toc-number">2.2.</span> <span class="toc-text">切换无线网络</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#切换网络"><span class="toc-number">2.2.1.</span> <span class="toc-text">切换网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#响应刷新"><span class="toc-number">2.2.2.</span> <span class="toc-text">响应刷新</span></a></li></ol></li></ol></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 25
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2020 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/07</span><a class="archive-post-title" href= "/2020/06/07/how-to-reproguard-by-mapping/" >如何通过 Mapping 文件反混淆</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/11</span><a class="archive-post-title" href= "/2019/11/11/android-jsbridge/" >一篇写给 Android 刚入门小伙伴的 JSBridge 文章</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/31</span><a class="archive-post-title" href= "/2019/08/31/git_and_gerrit/" >Git 与 Gerrit</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/12</span><a class="archive-post-title" href= "/2019/08/12/listview-scrollmode-parse/" >你要知道的 ListView 5种滑动模式全在这里了</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/01</span><a class="archive-post-title" href= "/2019/07/01/android-measurespec-layoutparams/" >MeasureSpec 与 LayoutParams 不得不说的二三事</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/03</span><a class="archive-post-title" href= "/2019/05/03/glide-contents/" >glide-contents</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/22</span><a class="archive-post-title" href= "/2019/04/22/how-to-build-android-source-code/" >从零开始搭建Android源码调试环境</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2018 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/18</span><a class="archive-post-title" href= "/2018/12/18/invalidate-of-choreographer/" >invalidate 三部曲之历经 Choreographer</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/13</span><a class="archive-post-title" href= "/2018/10/13/invalidate-of-invalidate/" >invalidate 三部曲之始于 invalidate</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/12</span><a class="archive-post-title" href= "/2018/10/12/trilogy-of-invalidate/" >invalidate 三部曲序</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span><a class="archive-post-title" href= "/2018/06/02/why-it-is-vsync/" >为什么是VSYNC</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/09</span><a class="archive-post-title" href= "/2018/01/09/android-touch-event-dispatch/" >触摸事件分析</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2017 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/07</span><a class="archive-post-title" href= "/2017/08/07/android-powerui/" >低电量提醒</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/14</span><a class="archive-post-title" href= "/2017/04/14/android-quicksettings-wifi/" >快捷开关之无线网路</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/05</span><a class="archive-post-title" href= "/2017/03/05/android-quicksettings-mobiledata/" >快捷开关之移动数据</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2016 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/29</span><a class="archive-post-title" href= "/2016/03/29/android-build-system-parse-PRODUCT_PROPERTY_OVERRIDES/" >关于PRODUCT_PROPERTY_OVERRIDES属性的解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span><a class="archive-post-title" href= "/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/" >PRODUCT_COPY_FILES语法解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/08</span><a class="archive-post-title" href= "/2016/01/08/android-build-systemui-keypoint-third/" >Android编译系统分析之几个关键点（三）</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2015 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/28</span><a class="archive-post-title" href= "/2015/12/28/android-build-system-keypoint-second/" >Android编译系统分析之几个关键点（二）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/22</span><a class="archive-post-title" href= "/2015/12/22/android-build-system-keypoint-first/" >Android编译系统分析之几个关键点（一）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span><a class="archive-post-title" href= "/2015/12/08/android-build-system-make/" >Android编译系统分析之make分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span><a class="archive-post-title" href= "/2015/12/01/android-build-system-lunch/" >Android编译系统分析之lunch分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/25</span><a class="archive-post-title" href= "/2015/11/25/gentoo-local-overlay/" >【译】Gentoo Local Overlay</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/24</span><a class="archive-post-title" href= "/2015/11/24/gentoo-basic-guide-ebuilds/" >【译】如何书写 Gentoo Ebuilds 的基本规则</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/05</span><a class="archive-post-title" href= "/2015/11/05/android-build-system-envsetup/" >source build/envsetup.sh 做了什么？</a>
+        </li>
+    
+    </div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="lunch"><span class="iconfont-archer">&#xe606;</span>lunch</span>
+    
+        <span class="sidebar-tag-name" data-tags="android"><span class="iconfont-archer">&#xe606;</span>android</span>
+    
+        <span class="sidebar-tag-name" data-tags="compile"><span class="iconfont-archer">&#xe606;</span>compile</span>
+    
+        <span class="sidebar-tag-name" data-tags="envsetup"><span class="iconfont-archer">&#xe606;</span>envsetup</span>
+    
+        <span class="sidebar-tag-name" data-tags="build"><span class="iconfont-archer">&#xe606;</span>build</span>
+    
+        <span class="sidebar-tag-name" data-tags="makefile"><span class="iconfont-archer">&#xe606;</span>makefile</span>
+    
+        <span class="sidebar-tag-name" data-tags="make"><span class="iconfont-archer">&#xe606;</span>make</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_COPY_FILES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_COPY_FILES</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_PROPERTY_OVERRIDES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_PROPERTY_OVERRIDES</span>
+    
+        <span class="sidebar-tag-name" data-tags="jsbridge"><span class="iconfont-archer">&#xe606;</span>jsbridge</span>
+    
+        <span class="sidebar-tag-name" data-tags="html"><span class="iconfont-archer">&#xe606;</span>html</span>
+    
+        <span class="sidebar-tag-name" data-tags="view"><span class="iconfont-archer">&#xe606;</span>view</span>
+    
+        <span class="sidebar-tag-name" data-tags="measureSpec"><span class="iconfont-archer">&#xe606;</span>measureSpec</span>
+    
+        <span class="sidebar-tag-name" data-tags="layoutParams"><span class="iconfont-archer">&#xe606;</span>layoutParams</span>
+    
+        <span class="sidebar-tag-name" data-tags="PowerUI"><span class="iconfont-archer">&#xe606;</span>PowerUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="SystemUI"><span class="iconfont-archer">&#xe606;</span>SystemUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="quickSettings"><span class="iconfont-archer">&#xe606;</span>quickSettings</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifiTIle"><span class="iconfont-archer">&#xe606;</span>wifiTIle</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifi"><span class="iconfont-archer">&#xe606;</span>wifi</span>
+    
+        <span class="sidebar-tag-name" data-tags="touchevent"><span class="iconfont-archer">&#xe606;</span>touchevent</span>
+    
+        <span class="sidebar-tag-name" data-tags="gentoo"><span class="iconfont-archer">&#xe606;</span>gentoo</span>
+    
+        <span class="sidebar-tag-name" data-tags="ebuild"><span class="iconfont-archer">&#xe606;</span>ebuild</span>
+    
+        <span class="sidebar-tag-name" data-tags="linux"><span class="iconfont-archer">&#xe606;</span>linux</span>
+    
+        <span class="sidebar-tag-name" data-tags="overlay"><span class="iconfont-archer">&#xe606;</span>overlay</span>
+    
+        <span class="sidebar-tag-name" data-tags="local"><span class="iconfont-archer">&#xe606;</span>local</span>
+    
+        <span class="sidebar-tag-name" data-tags="Git"><span class="iconfont-archer">&#xe606;</span>Git</span>
+    
+        <span class="sidebar-tag-name" data-tags="Gerrit"><span class="iconfont-archer">&#xe606;</span>Gerrit</span>
+    
+        <span class="sidebar-tag-name" data-tags="ubuntu"><span class="iconfont-archer">&#xe606;</span>ubuntu</span>
+    
+        <span class="sidebar-tag-name" data-tags="invalidate"><span class="iconfont-archer">&#xe606;</span>invalidate</span>
+    
+        <span class="sidebar-tag-name" data-tags="listView"><span class="iconfont-archer">&#xe606;</span>listView</span>
+    
+        <span class="sidebar-tag-name" data-tags="scrollMode"><span class="iconfont-archer">&#xe606;</span>scrollMode</span>
+    
+        <span class="sidebar-tag-name" data-tags="performance"><span class="iconfont-archer">&#xe606;</span>performance</span>
+    
+        <span class="sidebar-tag-name" data-tags="vsync"><span class="iconfont-archer">&#xe606;</span>vsync</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br/>
+    1、请确保node版本大于6.2<br/>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br/>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br/>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+        <span class="sidebar-category-name" data-categories="Android编译系统解析"><span class="iconfont-archer">&#xe60a;</span>Android编译系统解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Android"><span class="iconfont-archer">&#xe60a;</span>Android</span>
+    
+        <span class="sidebar-category-name" data-categories="View解析"><span class="iconfont-archer">&#xe60a;</span>View解析</span>
+    
+        <span class="sidebar-category-name" data-categories="SystemUI解析"><span class="iconfont-archer">&#xe60a;</span>SystemUI解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Gentoo"><span class="iconfont-archer">&#xe60a;</span>Gentoo</span>
+    
+        <span class="sidebar-category-name" data-categories="效率工具"><span class="iconfont-archer">&#xe60a;</span>效率工具</span>
+    
+        <span class="sidebar-category-name" data-categories="Android性能调优"><span class="iconfont-archer">&#xe60a;</span>Android性能调优</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "0xfree"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script>
+    
+    <!-- baidu static -->
+    <script>
+      (function(){
+          var bp = document.createElement('script');
+          var curProtocol = window.location.protocol.split(':')[0];
+          if (curProtocol === 'https') {
+              bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+          }
+          else {
+              bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+          }
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(bp, s);
+      })();
+    </script>
+    </body>
+</html>

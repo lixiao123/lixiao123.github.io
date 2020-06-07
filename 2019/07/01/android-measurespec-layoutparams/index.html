@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="0xfree">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="0xfree">
+    
+    <meta name="keywords" content="android,build-system,0xfree-blog">
+    
+    <meta name="description" content="Read The Fuck Code">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>MeasureSpec 与 LayoutParams 不得不说的二三事 · 0xfree&#39;s Blog</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/favicon.ico">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?7a3e0de2a2409ac715977a70cebe1750";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    
+    <!-- 谷歌统计  -->
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-131092737-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >0xfree&#39;s Blog.</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">MeasureSpec 与 LayoutParams 不得不说的二三事</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href=/>0xfree's Blog.</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+
+height:50vh;
+">
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(https://source.unsplash.com/1600x900/?code)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            MeasureSpec 与 LayoutParams 不得不说的二三事
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "android">android</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "view">view</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "measureSpec">measureSpec</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "layoutParams">layoutParams</a>
+    
+</div>
+                
+                
+                    <div class="post-intro-read">
+                        <span>字数统计: <span class="post-count word-count">4.9k</span>阅读时长: <span class="post-count reading-time">20 min</span></span>
+                    </div>
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2019/07/01</span>
+                    <!-- 
+                    <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                        <span class="iconfont-archer">&#xe602;</span>
+                        <span id="busuanzi_value_page_pv"></span>
+                    </span>
+                     -->
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <blockquote>
+<p>MesureSpec，测量规格</p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>MeasureSpec 这个话题往大了说，关系到整个 Android 测量体系的设定，往小了说，只是一个封装了位运算的内部静态类而已。当然我们不会仅仅满足于后者，所以我们就借 MeasureSpec 来简单窥探一下 Android 的测量体系。</p>
+<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><p>MeasureSpec，Android 给出的解释是封装了从父视图传递给子视图的布局要求。</p>
+<blockquote>
+<p>A MeasureSpec encapsulates the layout requirements passed from parent to child.</p>
+</blockquote>
+<p>这句话其实已经讲得足够清晰了，但对于从未接触过 MeasureSpec 的初学者来说，还是有点太过简单。</p>
+<p>在 Android 的视图系统中，屏幕资源是被整个 View 树一层层消费的，这个 View 树中，往上是父 View，往下是子 View，子 View 的资源都是直接来自父 View，所以在测量的过程中，子 View 并不能不受限制的获取屏幕资源，也要受限于父 View 所给的布局要求，这个要求就是通过 MeasureSpec 这个类来传递的。</p>
+<h3 id="先来讲一讲-LayoutParams"><a href="#先来讲一讲-LayoutParams" class="headerlink" title="先来讲一讲 LayoutParams"></a>先来讲一讲 LayoutParams</h3><p>为什么在这里会讲到 LayoutParams，因为要确定子 View 自身的测量状态，除了知道父 View 的限制之外，还需要知道子 View 自身对尺寸的期望，而 View 自身的期望在代码中就是通过 LayoutParams 来封装的。</p>
+<p>所以，可以这么说， LayoutParams 就是影响测量过程另一大因素。</p>
+<blockquote>
+<p>LayoutParams are used by views to tell their parents how they want to be laid out.</p>
+</blockquote>
+<p>LayoutParams 是 ViewGroup 的一个内部类，被用于来告诉父视图，子视图想怎么样被布局。另外，每个父视图都有继承 ViewGroup.LayoutParams 自己的内部实现，所以对于不同的布局，我们可使用的 LayoutParams 参数也不一样，这个我们后边会详细说明</p>
+<p>我们知道，一般的创建一个 View 有两种方式，一种是通过 Java 的方式 new 一个 View 对象，另一种就是通过 Android 的方式 Inflate 一个 View 对象。这两种方式的差别之处在于，new 一个对象是需要手动设置大量的参数，而 Inflate 一个对象，只需要在 xml 布局文件中写好就OK，系统帮我们做了大量的准备工作而已，效率高了不少。除此之外，其实是没有区别的。</p>
+<p>那么在写 xml 布局的时候，会发现每个 View 有两个参数是必不可少的，layout_width 和 layout_height ，对应于 View 的宽和高，这两个 xml 属性，其实对应的就是 LayoutParams 中的 width 和 height</p>
+<p>相对应的：</p>
+<ul>
+<li>margin 相关的参数，可以在 android.view.ViewGroup.MarginLayoutParams 中找到</li>
+<li>RelativeLayout 相关的参数，可以在 android.widget.RelativeLayout.LayoutParams 中找到</li>
+<li>weight 相关的参数，可以在 android.widget.LinearLayout.LayoutParams 中找到</li>
+<li>……</li>
+</ul>
+<p>这里附上一个 Android 中 LayoutParams 的类图，感兴趣的可以详细查询</p>
+<p><a href="https://imgchr.com/i/Z3YNz8" target="_blank" rel="noopener"><img src="https://s2.ax1x.com/2019/07/01/Z3YNz8.md.jpg" alt="Z3YNz8.md.jpg"></a></p>
+<p>以上这些内容理解之后就可以解释很多初学者的一些疑惑：</p>
+<ol>
+<li>我们将获取到的 LayoutParams 強转为 ViewGroup.LayoutParams 会导致 margin 丢失，是因为 margin 是 ViewGroup.MarginLayoutParams 才有的属性</li>
+<li>RelativeLayout 不支持 layout_gravity 的属性，LinearLayout 不支持 alignInParent 的属性，是因为他们互相不关联，相同之处在于只是都是继承自 MarginLayoutParams</li>
+<li>我们获取的控件的 LayoutParams 是父视图的 LayoutParams 的内部实现类，而不是子视图自己的，因为设置给子视图的 LayoutParams 是被父视图拿来测量用的，而不是自己使用</li>
+</ol>
+<p><strong>注意</strong>：因为 padding 是占用 View 内部空间的属性，会干预自身空间内 content 中的显示，并不会影响子 View 在父 view 中所占用的尺寸，所以并没有放在 LayoutParmas 中，而是在给子 View 分配空间，或者绘制自己的 content 的时候才会用到，在后边解析 FrameLayout 的时候也会提到这一点</p>
+<h3 id="MeasureSpec-类的解析"><a href="#MeasureSpec-类的解析" class="headerlink" title="MeasureSpec 类的解析"></a>MeasureSpec 类的解析</h3><p>理解了 LayoutParams 之后，接下来看一下 MeasureSpec 类的具体内容，因为对于后边涉及到的 MeasureSpec 的转换，这里的内容是必不可少的。 </p>
+<p>按照惯例，我们先来看类的注释</p>
+<blockquote>
+<p>A MeasureSpec encapsulates the layout requirements passed from parent to child.</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * Each MeasureSpec represents a requirement for either the width or the height. </span></span><br><span class="line"><span class="comment"> * A MeasureSpec is comprised of a size and a mode. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * MeasureSpecs are implemented as ints to reduce object allocation. This class </span></span><br><span class="line"><span class="comment"> * is provided to pack and unpack the &amp;lt;size, mode&amp;gt; tuple into the int. </span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>A MeasureSpec is comprised of a size and a mode.</p>
+</blockquote>
+<p>MeasureSpec 是通过 int 值的位运算来实现的，目的是减少对象的内存分配。将32位 int 值的前两位作为 mode（将 int 值左位运算30位），将后30位作为 size，如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MODE_SHIFT = <span class="number">30</span>; </span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MODE_MASK  = <span class="number">0x3</span> &lt;&lt; MODE_SHIFT; </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UNSPECIFIED = <span class="number">0</span> &lt;&lt; MODE_SHIFT; </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> EXACTLY     = <span class="number">1</span> &lt;&lt; MODE_SHIFT; </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> AT_MOST     = <span class="number">2</span> &lt;&lt; MODE_SHIFT;</span><br></pre></td></tr></table></figure>
+<p>MeasureSpec 中还带了一些方法，提供 mode 和 size 的打包和解包，方便 MeasureSpec 到 size 和 mode 的互相转换，这里我们不再细说，可以参看 MeasureSpec 的具体内容。</p>
+<h4 id="MeasureSpec-模式"><a href="#MeasureSpec-模式" class="headerlink" title="MeasureSpec 模式"></a>MeasureSpec 模式</h4><p>每个 MeasureSpec 代表一个宽或者高的要求。一个 MeasureSpec 由尺寸 size 和模式 mode 组成。<br>其中 size 表示当前 View 已经确定的尺寸，模式表示要对子 View 限定的模式。</p>
+<p>可以这么说，MeasureSpec 主要是对子 View 起作用，如果当前 View 已经是最后一层 View，那么 最后确定的 MeasureSpec 是没有多大意义的</p>
+<p>接下来，简单讲一下 MeasureSpec 表示的几种模式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** There are three possible modes: </span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * UNSPECIFIED </span></span><br><span class="line"><span class="comment"> * The parent has not imposed any constraint on the child. It can be whatever size </span></span><br><span class="line"><span class="comment"> * it wants.  </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * EXACTLY </span></span><br><span class="line"><span class="comment"> * The parent has determined an exact size for the child. The child is going to be </span></span><br><span class="line"><span class="comment"> * given those bounds regardless of how big it wants to be. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * AT_MOST</span></span><br><span class="line"><span class="comment"> * The child can be as large as it wants up to the specified size. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * /</span></span><br></pre></td></tr></table></figure>
+<p>我们来看一下有哪些模式</p>
+<ul>
+<li>UNSPECIFIED</li>
+</ul>
+<p>父 View 没有施加任何限制给子 View，可以是子 View 想要的任何尺寸</p>
+<ul>
+<li>EXACTLY</li>
+</ul>
+<p>父 View 已经限定了子 View 的精确尺寸，子 View 必须是这个尺寸，无论他自己想要多大的尺寸</p>
+<ul>
+<li>AT_MOST</li>
+</ul>
+<p>子 View 可以是不超过某个特定的值任意大小</p>
+<p>直接看到这些模式可能有点懵，各种要求和被要求，没有关系，我们先对这些模式有个大概的认识，在后续转换的过程中，我们再回来参考就可以</p>
+<p><strong>注意</strong>：Android 的类的注释往往言简意赅，理解一个类之前，读注释会带来很大的帮助，要养成读类注释的习惯很多人遇到一个函数不理解时，下意识的跑去 Google, Baidu，但其实对于 Android 来说，函数的使用说明都已经放到了源码注释中，直接读注释会比搜索工具来的更快，也更准确。</p>
+<h3 id="MeasureSpec-的使用解析"><a href="#MeasureSpec-的使用解析" class="headerlink" title="MeasureSpec 的使用解析"></a>MeasureSpec 的使用解析</h3><p>能找到这篇文文章并看到这里的童鞋，一定是已经了解过 Android 的整个绘制流程，这里我们简单的提及就可。没有看过的同学，可以通过之前的 <a href="https://www.0xfree.top/2018/10/12/trilogy-of-invalidate/">invalidate 系列文章</a> 来了解这部分内容</p>
+<p>MeasureSpec 的具体含义，我们在前边已经讲过了，接下来进行的 MeasureSpec 的解析，我们需要弄明白两个问题：</p>
+<ol>
+<li>MeasureSpec 是起始自哪里？</li>
+<li>MeasureSpec 是怎么从父 View 传递给子 View 的，这其中做了哪些处理？</li>
+</ol>
+<p>我们先来看第一个问题</p>
+<p>MeasureSpec 的起始通过前面的说明我们已经知道，MeasureSpec 是辅助父 View 测量子 View 的一个工具，所以测量过程中子 View 的 MeasureSpec 都是来自于父 View ，父 View 的 MeasureSpec 又来自于父 View 的父 View，那么最开始的 MeasureSpec 是来自哪里的呢，我们接下来就跟着 View 测量的起源来分析一下最开始的 MeasureSpec</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># android.view.ViewRootImpl#performTraversals() </span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">performTraversals</span><span class="params">()</span> </span>&#123; </span><br><span class="line">        </span><br><span class="line">    .......</span><br><span class="line">	</span><br><span class="line">    <span class="keyword">int</span> childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width); </span><br><span class="line">    <span class="keyword">int</span> childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height); </span><br><span class="line">    <span class="comment">// Ask host how big it wants to be </span></span><br><span class="line">    performMeasure(childWidthMeasureSpec, childHeightMeasureSpec); </span><br><span class="line">    </span><br><span class="line">	....... </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>performTraversals 是每一次屏幕进行测量布局绘制的入口，performMeasure 是真正测量的开始，而在performMeasure 之前的 getRootMeasureSpec 显然就是 MeasureSpec 的起始</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"># android.view.ViewRootImpl#getRootMeasureSpec() </span><br><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * Figures out the measure spec for the root view in a window based on it's </span></span><br><span class="line"><span class="comment"> * layout params. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> windowSize </span></span><br><span class="line"><span class="comment"> *            The available width or height of the window </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> rootDimension </span></span><br><span class="line"><span class="comment"> *            The layout params for one dimension (width or height) of the </span></span><br><span class="line"><span class="comment"> *            window. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> The measure spec to use to measure the root view. </span></span><br><span class="line"><span class="comment"> */</span> </span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getRootMeasureSpec</span><span class="params">(<span class="keyword">int</span> windowSize, <span class="keyword">int</span> rootDimension)</span> </span>&#123; </span><br><span class="line">    <span class="keyword">int</span> measureSpec; </span><br><span class="line">    <span class="keyword">switch</span> (rootDimension) &#123; </span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> ViewGroup.LayoutParams.MATCH_PARENT: </span><br><span class="line">        <span class="comment">// Window can't resize. Force root view to be windowSize. </span></span><br><span class="line">        measureSpec = MeasureSpec.makeMeasureSpec(windowSize, MeasureSpec.EXACTLY); </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line">    <span class="keyword">case</span> ViewGroup.LayoutParams.WRAP_CONTENT: </span><br><span class="line">        <span class="comment">// Window can resize. Set max size for root view. </span></span><br><span class="line">        measureSpec = MeasureSpec.makeMeasureSpec(windowSize, MeasureSpec.AT_MOST); </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line">    <span class="keyword">default</span>: </span><br><span class="line">        <span class="comment">// Window wants to be an exact size. Force root view to be that size. </span></span><br><span class="line">        measureSpec = MeasureSpec.makeMeasureSpec(rootDimension, MeasureSpec.EXACTLY); </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">return</span> measureSpec; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>传入的参数有两个：<br>第一个是 Window 的尺寸，每个 View 都会依附一个 Window 存在，所以 Window 大小直接会影响 Window 内的 View 测量。<br>第二个是 View期望的大小，也就是我们设置的 LayoutParams 中的 width 或 height，在 Window 的 addView  中会传入，如果不传入会获得一个默认值</p>
+<p>我们来看一下转换规则</p>
+<ol>
+<li><strong>MATCH_PARENT</strong>，如果子 View 期望和父 View 一样大，当前 Window 的尺寸已经确定了，那么也就可以说子 View 的尺寸精确了，所以构建一个 MeasureSpec 传给子 View，标识自己的尺寸和模式，尺寸就是 Window 的尺寸，模式就是精确模式</li>
+<li><strong>WRAP_CONTENT</strong>，如果子 View 期望自己的大小包裹内容就OK，那么父 View 表示没啥问题，只要这个大小不超过我的大小就OK，所以构建一个 MeasureSpec，大小为 Window 尺寸，模式表示最大模式，也就是最大不超过 Window 尺寸</li>
+<li><strong>其他</strong>，这个其他其实也就是固定的尺寸，也就是子 View 期望自己决定自己的尺寸，父 View 表示OK，给你期望的精确的尺寸，构建一个 MeasureSpec，大小为子 View 想要的尺寸，模式为精确</li>
+</ol>
+<p>经过以上解析，相信大家对 MeasureSpec 是经由父 View 和子 View 共同决定然后传递到子 View 有了更深的认识</p>
+<p>这个最初构建的 MeasureSpec 会从 View 树的顶端，经过每一个子节点的共同结果，继续向下传递，直到到达叶子节点，这样一轮遍历过后，每个 View 都拿到了属于自己的最终的 MeasureSpec，也就相当于确定了自己的最后的尺寸</p>
+<p>因为 MeasureSpec 是由父 View 和子 View 共同决定的，所以是在 ViewGroup，而不是 View 中存在  Measurespec的转换过程</p>
+<p>所以我们就以一个 ViewGroup 的视角来看 ViewGoup 与 View 之间的转换过程</p>
+<p>但是所有的 View 包括 ViewGroup 都是继承自 View 这个类，需要覆写 onMeasureSpec 来实现自己的测量方法，而 ViewGroup 没有实现自己的 onMeasure 方法，所以无法看到 ViewGroup 这一类父控件在测量过程中对子 View 施加的测量工作，所以我们选一个常见的 FrameLayout 来解析</p>
+<h3 id="FrameLayout-的测量转换"><a href="#FrameLayout-的测量转换" class="headerlink" title="FrameLayout 的测量转换"></a>FrameLayout 的测量转换</h3><p>我们就以 FrameLayout 作为示例，来分析一下 ViewGroup 和 View 之间的转换规则</p>
+<h4 id="FrameLayout-的测量"><a href="#FrameLayout-的测量" class="headerlink" title="FrameLayout 的测量"></a>FrameLayout 的测量</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"># android.widget.FrameLayout#onMeasure() </span><br><span class="line"><span class="meta">@Override</span> </span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onMeasure</span><span class="params">(<span class="keyword">int</span> widthMeasureSpec, <span class="keyword">int</span> heightMeasureSpec)</span> </span>&#123; </span><br><span class="line"><span class="comment">// 第一部分</span></span><br><span class="line">    <span class="keyword">int</span> count = getChildCount();</span><br><span class="line">	<span class="keyword">final</span> <span class="keyword">boolean</span> measureMatchParentChildren =</span><br><span class="line">		MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY ||</span><br><span class="line">		MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY;</span><br><span class="line">        mMatchParentChildren.clear();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123; </span><br><span class="line">        <span class="keyword">final</span> View child = getChildAt(i); </span><br><span class="line">        <span class="keyword">if</span> (mMeasureAllChildren || child.getVisibility() != GONE) &#123; </span><br><span class="line">            measureChildWithMargins(child, widthMeasureSpec, <span class="number">0</span>, heightMeasureSpec, <span class="number">0</span>); </span><br><span class="line">            <span class="keyword">final</span> LayoutParams lp = (LayoutParams) child.getLayoutParams(); </span><br><span class="line">            maxWidth = Math.max(maxWidth, </span><br><span class="line">                    child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin); </span><br><span class="line">            maxHeight = Math.max(maxHeight, </span><br><span class="line">                    child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin); </span><br><span class="line">            childState = combineMeasuredStates(childState, child.getMeasuredState()); </span><br><span class="line">            <span class="keyword">if</span> (measureMatchParentChildren) &#123; </span><br><span class="line">                <span class="keyword">if</span> (lp.width == LayoutParams.MATCH_PARENT || </span><br><span class="line">                        lp.height == LayoutParams.MATCH_PARENT) &#123; </span><br><span class="line">                    mMatchParentChildren.add(child); </span><br><span class="line">                &#125; </span><br><span class="line">            &#125; </span><br><span class="line">        &#125; </span><br><span class="line">    &#125; </span><br><span class="line">    </span><br><span class="line">	......</span><br><span class="line"><span class="comment">// 第二部分</span></span><br><span class="line">    setMeasuredDimension(resolveSizeAndState(maxWidth, widthMeasureSpec, childState), </span><br><span class="line">            resolveSizeAndState(maxHeight, heightMeasureSpec, </span><br><span class="line">                    childState &lt;&lt; MEASURED_HEIGHT_STATE_SHIFT)); </span><br><span class="line"><span class="comment">// 第三部分</span></span><br><span class="line">    count = mMatchParentChildren.size(); </span><br><span class="line">    <span class="keyword">if</span> (count &gt; <span class="number">1</span>) &#123; </span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123; </span><br><span class="line">            <span class="keyword">final</span> View child = mMatchParentChildren.get(i); </span><br><span class="line">            <span class="keyword">final</span> MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams(); </span><br><span class="line"></span><br><span class="line">            <span class="keyword">final</span> <span class="keyword">int</span> childWidthMeasureSpec; </span><br><span class="line">            <span class="keyword">if</span> (lp.width == LayoutParams.MATCH_PARENT) &#123; </span><br><span class="line">                <span class="keyword">final</span> <span class="keyword">int</span> width = Math.max(<span class="number">0</span>, getMeasuredWidth() </span><br><span class="line">                        - getPaddingLeftWithForeground() - getPaddingRightWithForeground() </span><br><span class="line">                        - lp.leftMargin - lp.rightMargin); </span><br><span class="line">                childWidthMeasureSpec = MeasureSpec.makeMeasureSpec( </span><br><span class="line">                        width, MeasureSpec.EXACTLY); </span><br><span class="line">            &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">                childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec, </span><br><span class="line">                        getPaddingLeftWithForeground() + getPaddingRightWithForeground() + </span><br><span class="line">                        lp.leftMargin + lp.rightMargin, </span><br><span class="line">                        lp.width); </span><br><span class="line">            <span class="keyword">final</span> <span class="keyword">int</span> childHeightMeasureSpec; </span><br><span class="line">            <span class="keyword">if</span> (lp.height == LayoutParams.MATCH_PARENT) &#123; </span><br><span class="line">                <span class="keyword">final</span> <span class="keyword">int</span> height = Math.max(<span class="number">0</span>, getMeasuredHeight() </span><br><span class="line">                        - getPaddingTopWithForeground() - getPaddingBottomWithForeground() </span><br><span class="line">                        - lp.topMargin - lp.bottomMargin); </span><br><span class="line">                childHeightMeasureSpec = MeasureSpec.makeMeasureSpec( </span><br><span class="line">                        height, MeasureSpec.EXACTLY); </span><br><span class="line">            &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">                childHeightMeasureSpec = getChildMeasureSpec(heightMeasureSpec, </span><br><span class="line">                        getPaddingTopWithForeground() + getPaddingBottomWithForeground() + </span><br><span class="line">                        lp.topMargin + lp.bottomMargin, </span><br><span class="line">                        lp.height); </span><br><span class="line">            &#125; </span><br><span class="line"></span><br><span class="line">            child.measure(childWidthMeasureSpec, childHeightMeasureSpec); </span><br><span class="line">        &#125; </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们来看 FrameLayout 的主流程的代码<br>其中分三个部分：</p>
+<ul>
+<li><p>第一部分<br>按照正常流程，遍历测量所有子 View 的大小</p>
+</li>
+<li><p>第二部分<br>设定 FrameLayout 的宽高，这里需要区分两点，如果 FrameLayout 要 MATCH_PARENT，其实高度在父 View  中计算 MeasureSpec 就已经可以确定下来了，如果 FrameLayout 要 WRAP_CONTENT，那么顾名思义，需要根据测量的子 View 的宽高来计算</p>
+</li>
+<li><p>第三部分<br>第三部分的测量有个条件</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="keyword">boolean</span> measureMatchParentChildren =</span><br><span class="line">		MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY ||</span><br><span class="line">		MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>这个其实表示，父 View 限定给当前 View 的测量模式是 AT_MOST，（至于为什么是 AT_MOST，在文章最后的表中可以推算出来），那么表示当前父 View 的高度是没有确定的，需要先测量子 View 的宽高之后才能知道自己的宽高，那么对于那些想要 MATCH_PARENT 的子View来说，只有父 View 宽高确定，才能知道自己的宽高，所以在第二部分设定完成 FrameLayou t的宽高之后，这里需要对这些 MATCH_PARENT 的子 View 再来测量一遍</p>
+<p>三个部分中，其实第一部分是我们所关心的，所以我们着重来看一下第一部分</p>
+<h4 id="测量模式转换"><a href="#测量模式转换" class="headerlink" title="测量模式转换"></a>测量模式转换</h4><p>递归测量子view，需要考虑 Margin 的影响，因为 Margin 是 View 之间的间隔，不包含在 View 的宽高内</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># android.view.ViewGroup#measureChildWithMargins() </span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">measureChildWithMargins</span><span class="params">(View child,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">int</span> parentWidthMeasureSpec, <span class="keyword">int</span> widthUsed, </span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">int</span> parentHeightMeasureSpec, <span class="keyword">int</span> heightUsed)</span> </span>&#123; </span><br><span class="line">    <span class="keyword">final</span> MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams(); </span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec, </span><br><span class="line">            mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin </span><br><span class="line">                    + widthUsed, lp.width); </span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec, </span><br><span class="line">            mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin </span><br><span class="line">                    + heightUsed, lp.height); </span><br><span class="line"></span><br><span class="line">    child.measure(childWidthMeasureSpec, childHeightMeasureSpec); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有个 widthUsed 和 heightUsed，分别表示宽度和高度上已经被消费的大小。因为父 View 可能存在多个子 View，所以分析当前 View 可使用的父 View 空间时，要去掉已经分配给其他子 View 的空间。</p>
+<p>比如 LinearLayout 水平布局时，从左到右测量时，这个已经被使用的宽度会越来越小，而对于 FrameLayout 的覆盖式布局传入的都是0</p>
+<p>这个函数会先根据父View的 MeasureSpec 和 LayoutParams 转换为子 View 的 LayoutParams，然后交给子View 的 measure 方法继续往下测量。</p>
+<p>我们来看具体的转换细节</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"># android.view.ViewGroup#getChildMeasureSpec() </span><br><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * Does the hard part of measureChildren: figuring out the MeasureSpec to </span></span><br><span class="line"><span class="comment"> * pass to a particular child. This method figures out the right MeasureSpec </span></span><br><span class="line"><span class="comment"> * for one dimension (height or width) of one child view. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * The goal is to combine information from our MeasureSpec with the </span></span><br><span class="line"><span class="comment"> * LayoutParams of the child to get the best possible results. For example, </span></span><br><span class="line"><span class="comment"> * if the this view knows its size (because its MeasureSpec has a mode of </span></span><br><span class="line"><span class="comment"> * EXACTLY), and the child has indicated in its LayoutParams that it wants </span></span><br><span class="line"><span class="comment"> * to be the same size as the parent, the parent should ask the child to </span></span><br><span class="line"><span class="comment"> * layout given an exact size. </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> spec The requirements for this view </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> padding The padding of this view for the current dimension and </span></span><br><span class="line"><span class="comment"> *        margins, if applicable </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> childDimension How big the child wants to be in the current </span></span><br><span class="line"><span class="comment"> *        dimension </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> a MeasureSpec integer for the child </span></span><br><span class="line"><span class="comment"> */</span> </span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getChildMeasureSpec</span><span class="params">(<span class="keyword">int</span> spec, <span class="keyword">int</span> padding, <span class="keyword">int</span> childDimension)</span> </span>&#123; </span><br><span class="line">    <span class="keyword">int</span> specMode = MeasureSpec.getMode(spec); </span><br><span class="line">    <span class="keyword">int</span> specSize = MeasureSpec.getSize(spec); </span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> size = Math.max(<span class="number">0</span>, specSize - padding); </span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> resultSize = <span class="number">0</span>; </span><br><span class="line">    <span class="keyword">int</span> resultMode = <span class="number">0</span>; </span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (specMode) &#123; </span><br><span class="line">    <span class="comment">// Parent has imposed an exact size on us </span></span><br><span class="line">    <span class="keyword">case</span> MeasureSpec.EXACTLY: </span><br><span class="line">        <span class="keyword">if</span> (childDimension &gt;= <span class="number">0</span>) &#123; </span><br><span class="line">            resultSize = childDimension; </span><br><span class="line">            resultMode = MeasureSpec.EXACTLY; </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.MATCH_PARENT) &#123; </span><br><span class="line">            <span class="comment">// Child wants to be our size. So be it. </span></span><br><span class="line">            resultSize = size; </span><br><span class="line">            resultMode = MeasureSpec.EXACTLY; </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.WRAP_CONTENT) &#123; </span><br><span class="line">            <span class="comment">// Child wants to determine its own size. It can't be </span></span><br><span class="line">            <span class="comment">// bigger than us. </span></span><br><span class="line">            resultSize = size; </span><br><span class="line">            resultMode = MeasureSpec.AT_MOST; </span><br><span class="line">        &#125; </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line"></span><br><span class="line">    <span class="comment">// Parent has imposed a maximum size on us </span></span><br><span class="line">    <span class="keyword">case</span> MeasureSpec.AT_MOST: </span><br><span class="line">        <span class="keyword">if</span> (childDimension &gt;= <span class="number">0</span>) &#123; </span><br><span class="line">            <span class="comment">// Child wants a specific size... so be it </span></span><br><span class="line">            resultSize = childDimension; </span><br><span class="line">            resultMode = MeasureSpec.EXACTLY; </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.MATCH_PARENT) &#123; </span><br><span class="line">            <span class="comment">// Child wants to be our size, but our size is not fixed. </span></span><br><span class="line">            <span class="comment">// Constrain child to not be bigger than us. </span></span><br><span class="line">            resultSize = size; </span><br><span class="line">            resultMode = MeasureSpec.AT_MOST; </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.WRAP_CONTENT) &#123; </span><br><span class="line">            <span class="comment">// Child wants to determine its own size. It can't be </span></span><br><span class="line">            <span class="comment">// bigger than us. </span></span><br><span class="line">            resultSize = size; </span><br><span class="line">            resultMode = MeasureSpec.AT_MOST; </span><br><span class="line">        &#125; </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line"></span><br><span class="line">    <span class="comment">// Parent asked to see how big we want to be </span></span><br><span class="line">    <span class="keyword">case</span> MeasureSpec.UNSPECIFIED: </span><br><span class="line">        <span class="keyword">if</span> (childDimension &gt;= <span class="number">0</span>) &#123; </span><br><span class="line">            <span class="comment">// Child wants a specific size... let him have it </span></span><br><span class="line">            resultSize = childDimension; </span><br><span class="line">            resultMode = MeasureSpec.EXACTLY; </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.MATCH_PARENT) &#123; </span><br><span class="line">            <span class="comment">// Child wants to be our size... find out how big it should </span></span><br><span class="line">            <span class="comment">// be </span></span><br><span class="line">            resultSize = View.sUseZeroUnspecifiedMeasureSpec ? <span class="number">0</span> : size; </span><br><span class="line">            resultMode = MeasureSpec.UNSPECIFIED; </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.WRAP_CONTENT) &#123; </span><br><span class="line">            <span class="comment">// Child wants to determine its own size.... find out how </span></span><br><span class="line">            <span class="comment">// big it should be </span></span><br><span class="line">            resultSize = View.sUseZeroUnspecifiedMeasureSpec ? <span class="number">0</span> : size; </span><br><span class="line">            resultMode = MeasureSpec.UNSPECIFIED; </span><br><span class="line">        &#125; </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">//noinspection ResourceType </span></span><br><span class="line">    <span class="keyword">return</span> MeasureSpec.makeMeasureSpec(resultSize, resultMode); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上就是转换规则，每个分支都有详细注释，我们不再赘述，将以上的代码转换为表格的形式给出</p>
+<table>
+<thead>
+<tr>
+<th>子LayoutParams\父MeasureSpec</th>
+<th>UNSPECIFIED#0</th>
+<th>AT_MOST#parentSize</th>
+<th>EXACTLY#parentSize</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MATCH_PARENT</td>
+<td>UNSPECIFIED#0（子View想要和父View一样大，那么找出来具体多大）</td>
+<td>AT_MOST#parentSize（子view表示想和父View一样大，父View不固定，只能限制子View不要超过这个尺寸）</td>
+<td>EXACTLY#parentSize（子view想要和父View一样大，父view已经确定了，那么子view就是父view大小了）</td>
+</tr>
+<tr>
+<td>WRAP_CONTENT</td>
+<td>UNSPECIFIED#0（子view想要自己决定，那么找出来具体多大 ）</td>
+<td>AT_MOST#parentSize（子View表示自己决定大小，父View表示不超过我就OK）</td>
+<td>AT_MOST#parentSize（子View表示要自己决定，父view表示，只要不超过我的自身值就OK）</td>
+</tr>
+<tr>
+<td>固定值大小</td>
+<td>EXACTLY#childSize（子view表明自己的大小，父view表示你开心就好）</td>
+<td>EXACTLY#childSize（子view表明自己的大小，父View表示你开心就好）</td>
+<td>EXACTLY#childSize（子view明确表示了自己的期望值，那么子View你开心就好）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>注</strong>：</p>
+<ul>
+<li><code>#</code> 用来分割 mode 和 size</li>
+<li>其中 parentSize 就是 specSize，也就是父 View 的尺寸大小，或者准确来说，是限定父 View 的最大尺寸。因为对于 EXACTLY 来说，父 View 大小是可以确定的，而对于 AT_MOST 来说，还需要测量子 View 的大小，所以这里是最大尺寸</li>
+<li>其中 childSize 就是 childDimens</li>
+</ul>
+<p>对于上述的表格，其实也不是很直观，只是将代码的转换算法用表格的方式整理出来了。</p>
+<p>我们来尝试用另一个角度的方式理解这个表格</p>
+<p>UNSPECIFIED 、AT_MOST、EXACTLY 其实代表着测量的三个状态</p>
+<ul>
+<li>UNSPECIFIED表示是未执行测量，一切都是初始化的状态</li>
+<li>AT_MOST表示当前View的尺寸不确定，需要经过测量子View才能决定</li>
+<li>EXACTLY表示当前View的尺寸不需要经过测量子View就已经决定好了</li>
+</ul>
+<p>基于以上的理论，我们来重新解析刚刚的表格（横向为ABC，竖向为123）</p>
+<ul>
+<li>子View 如果是固定尺寸（A3，B3，C3）：这个很好理解，直接就可以确定大小</li>
+<li>父View 是UNSPECIFIED（A1，A2）：这一列也很好理解，都是未初始化</li>
+<li>父View 是 AT_MOST（B1，B2）：也即父View没有确定高度，那么子View都无法确认高度，也即必须要先行测量</li>
+<li>父View是EXACTLY（C1，C2）：子View想要适应自己大小，那么其实就必须先经过测量</li>
+</ul>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>我将这篇文章中讲到的一些关键知识点罗列如下，可以查看是否真的理解了这些内容</p>
+<ol>
+<li>子 View 提供给父 View 的 LayoutParams 是用来表示子 View 自身的期望大小</li>
+<li>每个 View 都有自己的 MeasureSpec 来代表自己测量后的状态</li>
+<li>每个 View 的 MeasureSpec 都是由父 View 的 Measure 和自身 LayoutParams 共同确定的</li>
+<li>View 树的测量是深度优先</li>
+<li>每个 View 都是先确定测量模式，然后再去根据测量模式实际测量</li>
+</ol>
+<p>搞明白了MeasureSpec和LayoutParams相关的内容，对于理解 Android 的测量体系，以及自定义View的测量过程，或者灵活使用View的测量结果都有很大的帮助，另外在对于布局过程中出现的一些异常布局，也能通过快速查看源码定位问题，是作为高级工程师必不可少的一项技能。</p>
+
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://www.0xfree.top">0xfree</a>
+            <p>原文链接：<a href="http://www.0xfree.top/2019/07/01/android-measurespec-layoutparams/">http://www.0xfree.top/2019/07/01/android-measurespec-layoutparams/</a>
+            <p>发表日期：<a href="http://www.0xfree.top/2019/07/01/android-measurespec-layoutparams/">July 1st 2019, 12:16:18 am</a>
+            <p>更新日期：<a href="http://www.0xfree.top/2019/07/01/android-measurespec-layoutparams/">March 7th 2020, 12:51:41 am</a>
+            <p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href= "/2019/05/03/glide-contents/" title= "glide-contents">
+                    <div class="prevTitle">glide-contents</div>
+                </a>
+            
+        </li>
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href= "/2019/08/12/listview-scrollmode-parse/" title= "你要知道的 ListView 5种滑动模式全在这里了">
+                    <div class="nextTitle">你要知道的 ListView 5种滑动模式全在这里了</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    
+    <!-- partial('_partial/comment/changyan') -->
+    <!--PC版-->
+
+
+    
+    
+    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <div id="comment"></div>
+    <script>
+    new Valine({
+        el: '#comment' ,
+        notify:false, 
+        verify:false, 
+        appId: "ntHALp5naE0BMs0bOxMw9jmN-gzGzoHsz",
+        appKey: "2Y1bCJ9hhKzMEjisEm2hIAME",
+        placeholder: "gogo",
+        path:window.location.pathname, 
+        avatar:'mm' 
+    });
+    </script>
+
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:daniel2008lee@163.com" class="iconfont-archer email" title=email ></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/lixiao123" class="iconfont-archer github" target="_blank" title=github></a>
+            
+        
+    
+        
+            
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/myself-low.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+            
+                <a href="https://www.zhihu.com/people/li-xiao-92-82/activities" class="iconfont-archer zhihu" target="_blank" title=zhihu></a>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#正文"><span class="toc-number">2.</span> <span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#先来讲一讲-LayoutParams"><span class="toc-number">2.1.</span> <span class="toc-text">先来讲一讲 LayoutParams</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MeasureSpec-类的解析"><span class="toc-number">2.2.</span> <span class="toc-text">MeasureSpec 类的解析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MeasureSpec-模式"><span class="toc-number">2.2.1.</span> <span class="toc-text">MeasureSpec 模式</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MeasureSpec-的使用解析"><span class="toc-number">2.3.</span> <span class="toc-text">MeasureSpec 的使用解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FrameLayout-的测量转换"><span class="toc-number">2.4.</span> <span class="toc-text">FrameLayout 的测量转换</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#FrameLayout-的测量"><span class="toc-number">2.4.1.</span> <span class="toc-text">FrameLayout 的测量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#测量模式转换"><span class="toc-number">2.4.2.</span> <span class="toc-text">测量模式转换</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-number">3.</span> <span class="toc-text">后记</span></a></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 25
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2020 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/07</span><a class="archive-post-title" href= "/2020/06/07/how-to-reproguard-by-mapping/" >如何通过 Mapping 文件反混淆</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/11</span><a class="archive-post-title" href= "/2019/11/11/android-jsbridge/" >一篇写给 Android 刚入门小伙伴的 JSBridge 文章</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/31</span><a class="archive-post-title" href= "/2019/08/31/git_and_gerrit/" >Git 与 Gerrit</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/12</span><a class="archive-post-title" href= "/2019/08/12/listview-scrollmode-parse/" >你要知道的 ListView 5种滑动模式全在这里了</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/01</span><a class="archive-post-title" href= "/2019/07/01/android-measurespec-layoutparams/" >MeasureSpec 与 LayoutParams 不得不说的二三事</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/03</span><a class="archive-post-title" href= "/2019/05/03/glide-contents/" >glide-contents</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/22</span><a class="archive-post-title" href= "/2019/04/22/how-to-build-android-source-code/" >从零开始搭建Android源码调试环境</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2018 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/18</span><a class="archive-post-title" href= "/2018/12/18/invalidate-of-choreographer/" >invalidate 三部曲之历经 Choreographer</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/13</span><a class="archive-post-title" href= "/2018/10/13/invalidate-of-invalidate/" >invalidate 三部曲之始于 invalidate</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/12</span><a class="archive-post-title" href= "/2018/10/12/trilogy-of-invalidate/" >invalidate 三部曲序</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span><a class="archive-post-title" href= "/2018/06/02/why-it-is-vsync/" >为什么是VSYNC</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/09</span><a class="archive-post-title" href= "/2018/01/09/android-touch-event-dispatch/" >触摸事件分析</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2017 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/07</span><a class="archive-post-title" href= "/2017/08/07/android-powerui/" >低电量提醒</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/14</span><a class="archive-post-title" href= "/2017/04/14/android-quicksettings-wifi/" >快捷开关之无线网路</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/05</span><a class="archive-post-title" href= "/2017/03/05/android-quicksettings-mobiledata/" >快捷开关之移动数据</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2016 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/29</span><a class="archive-post-title" href= "/2016/03/29/android-build-system-parse-PRODUCT_PROPERTY_OVERRIDES/" >关于PRODUCT_PROPERTY_OVERRIDES属性的解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span><a class="archive-post-title" href= "/2016/02/24/android-build-system-parse-PRODUCT_COPY_FILES/" >PRODUCT_COPY_FILES语法解析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/08</span><a class="archive-post-title" href= "/2016/01/08/android-build-systemui-keypoint-third/" >Android编译系统分析之几个关键点（三）</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2015 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/28</span><a class="archive-post-title" href= "/2015/12/28/android-build-system-keypoint-second/" >Android编译系统分析之几个关键点（二）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/22</span><a class="archive-post-title" href= "/2015/12/22/android-build-system-keypoint-first/" >Android编译系统分析之几个关键点（一）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span><a class="archive-post-title" href= "/2015/12/08/android-build-system-make/" >Android编译系统分析之make分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span><a class="archive-post-title" href= "/2015/12/01/android-build-system-lunch/" >Android编译系统分析之lunch分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/25</span><a class="archive-post-title" href= "/2015/11/25/gentoo-local-overlay/" >【译】Gentoo Local Overlay</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/24</span><a class="archive-post-title" href= "/2015/11/24/gentoo-basic-guide-ebuilds/" >【译】如何书写 Gentoo Ebuilds 的基本规则</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/05</span><a class="archive-post-title" href= "/2015/11/05/android-build-system-envsetup/" >source build/envsetup.sh 做了什么？</a>
+        </li>
+    
+    </div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="lunch"><span class="iconfont-archer">&#xe606;</span>lunch</span>
+    
+        <span class="sidebar-tag-name" data-tags="android"><span class="iconfont-archer">&#xe606;</span>android</span>
+    
+        <span class="sidebar-tag-name" data-tags="compile"><span class="iconfont-archer">&#xe606;</span>compile</span>
+    
+        <span class="sidebar-tag-name" data-tags="envsetup"><span class="iconfont-archer">&#xe606;</span>envsetup</span>
+    
+        <span class="sidebar-tag-name" data-tags="build"><span class="iconfont-archer">&#xe606;</span>build</span>
+    
+        <span class="sidebar-tag-name" data-tags="makefile"><span class="iconfont-archer">&#xe606;</span>makefile</span>
+    
+        <span class="sidebar-tag-name" data-tags="make"><span class="iconfont-archer">&#xe606;</span>make</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_COPY_FILES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_COPY_FILES</span>
+    
+        <span class="sidebar-tag-name" data-tags="PRODUCT_PROPERTY_OVERRIDES"><span class="iconfont-archer">&#xe606;</span>PRODUCT_PROPERTY_OVERRIDES</span>
+    
+        <span class="sidebar-tag-name" data-tags="jsbridge"><span class="iconfont-archer">&#xe606;</span>jsbridge</span>
+    
+        <span class="sidebar-tag-name" data-tags="html"><span class="iconfont-archer">&#xe606;</span>html</span>
+    
+        <span class="sidebar-tag-name" data-tags="view"><span class="iconfont-archer">&#xe606;</span>view</span>
+    
+        <span class="sidebar-tag-name" data-tags="measureSpec"><span class="iconfont-archer">&#xe606;</span>measureSpec</span>
+    
+        <span class="sidebar-tag-name" data-tags="layoutParams"><span class="iconfont-archer">&#xe606;</span>layoutParams</span>
+    
+        <span class="sidebar-tag-name" data-tags="PowerUI"><span class="iconfont-archer">&#xe606;</span>PowerUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="SystemUI"><span class="iconfont-archer">&#xe606;</span>SystemUI</span>
+    
+        <span class="sidebar-tag-name" data-tags="quickSettings"><span class="iconfont-archer">&#xe606;</span>quickSettings</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifiTIle"><span class="iconfont-archer">&#xe606;</span>wifiTIle</span>
+    
+        <span class="sidebar-tag-name" data-tags="wifi"><span class="iconfont-archer">&#xe606;</span>wifi</span>
+    
+        <span class="sidebar-tag-name" data-tags="touchevent"><span class="iconfont-archer">&#xe606;</span>touchevent</span>
+    
+        <span class="sidebar-tag-name" data-tags="gentoo"><span class="iconfont-archer">&#xe606;</span>gentoo</span>
+    
+        <span class="sidebar-tag-name" data-tags="ebuild"><span class="iconfont-archer">&#xe606;</span>ebuild</span>
+    
+        <span class="sidebar-tag-name" data-tags="linux"><span class="iconfont-archer">&#xe606;</span>linux</span>
+    
+        <span class="sidebar-tag-name" data-tags="overlay"><span class="iconfont-archer">&#xe606;</span>overlay</span>
+    
+        <span class="sidebar-tag-name" data-tags="local"><span class="iconfont-archer">&#xe606;</span>local</span>
+    
+        <span class="sidebar-tag-name" data-tags="Git"><span class="iconfont-archer">&#xe606;</span>Git</span>
+    
+        <span class="sidebar-tag-name" data-tags="Gerrit"><span class="iconfont-archer">&#xe606;</span>Gerrit</span>
+    
+        <span class="sidebar-tag-name" data-tags="ubuntu"><span class="iconfont-archer">&#xe606;</span>ubuntu</span>
+    
+        <span class="sidebar-tag-name" data-tags="invalidate"><span class="iconfont-archer">&#xe606;</span>invalidate</span>
+    
+        <span class="sidebar-tag-name" data-tags="listView"><span class="iconfont-archer">&#xe606;</span>listView</span>
+    
+        <span class="sidebar-tag-name" data-tags="scrollMode"><span class="iconfont-archer">&#xe606;</span>scrollMode</span>
+    
+        <span class="sidebar-tag-name" data-tags="performance"><span class="iconfont-archer">&#xe606;</span>performance</span>
+    
+        <span class="sidebar-tag-name" data-tags="vsync"><span class="iconfont-archer">&#xe606;</span>vsync</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br/>
+    1、请确保node版本大于6.2<br/>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br/>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br/>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+        <span class="sidebar-category-name" data-categories="Android编译系统解析"><span class="iconfont-archer">&#xe60a;</span>Android编译系统解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Android"><span class="iconfont-archer">&#xe60a;</span>Android</span>
+    
+        <span class="sidebar-category-name" data-categories="View解析"><span class="iconfont-archer">&#xe60a;</span>View解析</span>
+    
+        <span class="sidebar-category-name" data-categories="SystemUI解析"><span class="iconfont-archer">&#xe60a;</span>SystemUI解析</span>
+    
+        <span class="sidebar-category-name" data-categories="Gentoo"><span class="iconfont-archer">&#xe60a;</span>Gentoo</span>
+    
+        <span class="sidebar-category-name" data-categories="效率工具"><span class="iconfont-archer">&#xe60a;</span>效率工具</span>
+    
+        <span class="sidebar-category-name" data-categories="Android性能调优"><span class="iconfont-archer">&#xe60a;</span>Android性能调优</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "0xfree"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script>
+    
+    <!-- baidu static -->
+    <script>
+      (function(){
+          var bp = document.createElement('script');
+          var curProtocol = window.location.protocol.split(':')[0];
+          if (curProtocol === 'https') {
+              bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+          }
+          else {
+              bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+          }
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(bp, s);
+      })();
+    </script>
+    </body>
+</html>
