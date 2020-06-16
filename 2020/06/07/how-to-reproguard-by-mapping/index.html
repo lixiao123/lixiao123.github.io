@@ -429,7 +429,7 @@ height:50vh;
 <p>其实这些能力都来自于 Proguard 这个程序，Proguard 能利用字典文件，在编译时将我们的类名，方法名，字段名都替换掉，最后生成一份非常反人类的编译产物。Proguard 在每次运行时都会创建一个 mapping.txt 文件，其中列出了经过混淆处理的类、方法和字段名称与原始名称的映射关系。此映射文件还包含用于将行号映射回原始源文件行号的信息</p>
 <p>这篇文章的目的就是要解析生成的 Mapping 文件</p>
 <h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="Mapping-文件的来源与用途"><a href="#Mapping-文件的来源与用途" class="headerlink" title="Mapping 文件的来源与用途"></a>Mapping 文件的来源与用途</h2><p>以下就是 Mapping 文件的生成过程</p>
-<p><img src="./ProGuard_ReTrace.png" alt="craete mapping file]"></p>
+<p><img src="./ProGuard_ReTrace.png" width="40%" height="40%"></p>
 <p>这个 Mapping 文件是由 Proguard 程序自动生成的，会存放在 output 目录下，与 release 包放在一起。需要谨记的是，Mapping 文件可能在每次 Proguard 运行后都会不同，所以发布给用户的包一定要留存好 Mapping 文件，方便后续跟踪解决问题</p>
 <h2 id="了解-Mapping-文件的好处"><a href="#了解-Mapping-文件的好处" class="headerlink" title="了解 Mapping 文件的好处"></a>了解 Mapping 文件的好处</h2><p>了解 Mapping 文件最直观的好处在于我们跟踪线上的经过混淆之后的 Crash 信息时，可以从 Mapping 文件逆向推出原始的堆栈信息，更快更方便的定位问题，但不只这些，我们还可以通过 Mapping 文件处理内存快照文件 Hprof 的反混淆，处理 Systrace 的文件的反混淆，还有 Nanoscope 文件的反混淆等</p>
 <h2 id="如何解析-Mapping-文件"><a href="#如何解析-Mapping-文件" class="headerlink" title="如何解析 Mapping 文件"></a>如何解析 Mapping 文件</h2><blockquote>
@@ -535,7 +535,7 @@ height:50vh;
             <p>原文作者：<a href="http://www.0xfree.top">0xfree</a>
             <p>原文链接：<a href="http://www.0xfree.top/2020/06/07/how-to-reproguard-by-mapping/">http://www.0xfree.top/2020/06/07/how-to-reproguard-by-mapping/</a>
             <p>发表日期：<a href="http://www.0xfree.top/2020/06/07/how-to-reproguard-by-mapping/">June 7th 2020, 11:57:00 pm</a>
-            <p>更新日期：<a href="http://www.0xfree.top/2020/06/07/how-to-reproguard-by-mapping/">June 8th 2020, 12:18:23 am</a>
+            <p>更新日期：<a href="http://www.0xfree.top/2020/06/07/how-to-reproguard-by-mapping/">June 16th 2020, 11:38:02 pm</a>
             <p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -700,8 +700,6 @@ top:50vh;
     <div class="sidebar-content sidebar-content-show-archive">
           <div class="sidebar-panel-archives">
     <!-- 在ejs中将archive按照时间排序 -->
-    
-    
     
     
     
@@ -1236,13 +1234,13 @@ top:50vh;
     
         <span class="sidebar-tag-name" data-tags="quickSettings"><span class="iconfont-archer">&#xe606;</span>quickSettings</span>
     
-        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
-    
-        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
-    
         <span class="sidebar-tag-name" data-tags="wifiTIle"><span class="iconfont-archer">&#xe606;</span>wifiTIle</span>
     
         <span class="sidebar-tag-name" data-tags="wifi"><span class="iconfont-archer">&#xe606;</span>wifi</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileDataTile"><span class="iconfont-archer">&#xe606;</span>mobileDataTile</span>
+    
+        <span class="sidebar-tag-name" data-tags="mobileData"><span class="iconfont-archer">&#xe606;</span>mobileData</span>
     
         <span class="sidebar-tag-name" data-tags="touchevent"><span class="iconfont-archer">&#xe606;</span>touchevent</span>
     
